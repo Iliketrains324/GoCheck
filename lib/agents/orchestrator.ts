@@ -4,7 +4,7 @@
  */
 
 import { getServiceClient } from "@/lib/supabase";
-import { extractTextFromBuffer } from "@/lib/pdf";
+// PDF extraction now happens client-side; this orchestrator is superseded by runAllAgents in check/[jobId]/page.tsx
 import { checkAform } from "./aform";
 import { checkPpr } from "./ppr";
 import { checkCoherence } from "./coherence";
@@ -131,7 +131,7 @@ export async function runOrchestrator(jobId: string): Promise<void> {
         }
 
         const buffer = Buffer.from(await fileData.arrayBuffer());
-        text = await extractTextFromBuffer(buffer);
+        text = buffer.toString("utf-8"); // fallback — orchestrator is superseded by client-side runAllAgents
       }
 
       const output = await agentFn({ docType, text, pages: pages ?? [] });
