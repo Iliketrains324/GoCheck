@@ -1,0 +1,27 @@
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "GoCheck — CSO Document Checker",
+  description:
+    "AI-powered pre-activity document checker for DLSU Manila student organizations. Catch errors in your AFORM, PPR, and other CSO documents before submission.",
+  keywords: ["DLSU", "CSO", "document checker", "pre-acts", "AFORM", "PPR", "GoCheck"],
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen flex flex-col">
+        {children}
+      </body>
+    </html>
+  );
+}

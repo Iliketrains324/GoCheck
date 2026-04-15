@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --dlsu-green: #006B3C;
+    --dlsu-green-dark: #004A28;
+    --dlsu-green-light: #007C45;
+    --dlsu-gold: #FFD700;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    @apply box-border;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-dlsu-green text-white px-6 py-3 rounded-lg font-semibold
+           hover:bg-dlsu-green-dark active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-dlsu-green border-2 border-dlsu-green px-6 py-3
+           rounded-lg font-semibold hover:bg-dlsu-green-muted active:scale-95
+           transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+
+  .badge-major {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-red-100 text-red-800 border border-red-200;
+  }
+
+  .badge-minor {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-yellow-100 text-yellow-800 border border-yellow-200;
+  }
+
+  .badge-ok {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-green-100 text-green-800 border border-green-200;
+  }
+}
+
+/* Progress bar animation */
+@keyframes pulse-bar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-bar {
+  animation: pulse-bar 1.5s ease-in-out infinite;
+}
+
+/* Upload zone hover */
+.upload-zone {
+  @apply border-2 border-dashed border-gray-300 rounded-xl p-8 text-center
+         hover:border-dlsu-green hover:bg-dlsu-green-muted transition-all duration-200
+         cursor-pointer;
+}
+
+.upload-zone.active {
+  @apply border-dlsu-green bg-dlsu-green-muted;
+}
