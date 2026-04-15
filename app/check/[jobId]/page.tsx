@@ -15,11 +15,31 @@ const STATUS_LABELS: Record<string, string> = {
   failed: "Failed",
 };
 
+async function runProcessing(jobId: string, files: Job["files"]) {
+  const docTypes = (files ?? []).map((f) => f.docType);
+  for (const dt of docTypes) {
+    await fetch(`/api/jobs/${jobId}/process-doc`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ docType: dt }),
+    });
+  }
+  if (docTypes.length > 1) {
+    await fetch(`/api/jobs/${jobId}/process-doc`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ docType: "COHERENCE" }),
+    });
+  }
+  await fetch(`/api/jobs/${jobId}/complete`, { method: "POST" });
+}
+
 export default function CheckPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processingStarted, setProcessingStarted] = useState(false);
 
   useEffect(() => {
     fetch(`/api/jobs/${jobId}`)
@@ -29,6 +49,10 @@ export default function CheckPage() {
         setLoading(false);
         if (data.status === "completed") {
           setTimeout(() => router.push(`/results/${jobId}`), 1200);
+        } else if (data.status === "pending" && !processingStarted) {
+          // Check page owns processing — fires once, survives the page lifecycle
+          setProcessingStarted(true);
+          runProcessing(jobId, data.files);
         }
       });
 
@@ -48,7 +72,7 @@ export default function CheckPage() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [jobId, router]);
+  }, [jobId, router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (

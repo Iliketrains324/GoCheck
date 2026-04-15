@@ -97,31 +97,8 @@ export default function UploadPage() {
       if (!res.ok) throw new Error(data.error ?? "Upload failed");
 
       const { jobId } = data;
-
-      // Navigate immediately — processing happens in the background driven by this client
+      // Check page takes over processing once it loads
       router.push(`/check/${jobId}`);
-
-      // Process each document one at a time (keeps each call under Vercel's 10s limit)
-      const docTypes = uploadedFiles.map((uf) => uf.docType as string);
-      for (const dt of docTypes) {
-        await fetch(`/api/jobs/${jobId}/process-doc`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ docType: dt }),
-        }).catch(() => {});
-      }
-
-      // Run coherence check if multiple docs
-      if (docTypes.length > 1) {
-        await fetch(`/api/jobs/${jobId}/process-doc`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ docType: "COHERENCE" }),
-        }).catch(() => {});
-      } else {
-        // Single doc — mark as completed
-        await fetch(`/api/jobs/${jobId}/complete`, { method: "POST" }).catch(() => {});
-      }
     } catch (err) {
       setError((err as Error).message);
       setSubmitting(false);
