@@ -4,6 +4,7 @@ function getClient(): OpenAI {
   return new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY ?? "",
+    dangerouslyAllowBrowser: true, // agents run client-side; key is intentionally public
     defaultHeaders: {
       "HTTP-Referer": "https://gocheck-psi.vercel.app",
       "X-Title": "GoCheck - CSO Document Checker",
