@@ -15,26 +15,36 @@ const STATUS_LABELS: Record<string, string> = {
   failed: "Failed",
 };
 
-async function runProcessing(jobId: string, files: Job["files"]) {
+async function runProcessing(jobId: string, files: Job["files"]): Promise<boolean> {
   const docTypes = (files ?? []).map((f) => f.docType);
   const hasCoherence = docTypes.length > 1;
 
   for (let i = 0; i < docTypes.length; i++) {
     const isLast = !hasCoherence && i === docTypes.length - 1;
-    await fetch(`/api/jobs/${jobId}/process-doc`, {
+    const res = await fetch(`/api/jobs/${jobId}/process-doc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ docType: docTypes[i], isLast }),
     });
+    if (!res.ok) {
+      console.error(`[runProcessing] process-doc failed for ${docTypes[i]}:`, res.status);
+      return false;
+    }
   }
 
   if (hasCoherence) {
-    await fetch(`/api/jobs/${jobId}/process-doc`, {
+    const res = await fetch(`/api/jobs/${jobId}/process-doc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ docType: "COHERENCE", isLast: true }),
     });
+    if (!res.ok) {
+      console.error("[runProcessing] COHERENCE process-doc failed:", res.status);
+      return false;
+    }
   }
+
+  return true;
 }
 
 export default function CheckPage() {

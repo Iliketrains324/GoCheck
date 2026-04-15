@@ -1,9 +1,11 @@
 /**
  * POST /api/jobs/[jobId]/process-doc
  * Processes a SINGLE document for a job.
- * Called once per document from the client, keeping each call under Vercel's 10s limit.
- * Body JSON: { docType: string }
+ * Body JSON: { docType: string, isLast?: boolean }
  */
+
+// Allow up to 60 s on Vercel Hobby (default is 10 s — not enough for DeepSeek)
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
@@ -117,11 +119,16 @@ export async function POST(
       COHERENCE: { ...coherenceResult, docType: "AFORM" as DocType },
     };
 
-    await db.from("jobs").update({
+    const { error: cohWriteErr } = await db.from("jobs").update({
       results: newResults,
       status: "completed",
       updated_at: new Date().toISOString(),
     }).eq("id", jobId);
+
+    if (cohWriteErr) {
+      console.error("[process-doc] COHERENCE DB write failed:", cohWriteErr.message);
+      return NextResponse.json({ error: "DB write failed", detail: cohWriteErr.message }, { status: 500 });
+    }
 
     await updateProgress("COHERENCE", "done", coherenceResult.summary);
 
@@ -169,11 +176,16 @@ export async function POST(
     [docType]: { ...output, rawText: text?.slice(0, 3000) },
   };
 
-  await db.from("jobs").update({
+  const { error: writeErr } = await db.from("jobs").update({
     results: newResults,
     status: isLast ? "completed" : "processing",
     updated_at: new Date().toISOString(),
   }).eq("id", jobId);
+
+  if (writeErr) {
+    console.error("[process-doc] DB write failed:", writeErr.message);
+    return NextResponse.json({ error: "DB write failed", detail: writeErr.message }, { status: 500 });
+  }
 
   await updateProgress(docType, "done", output.summary);
 

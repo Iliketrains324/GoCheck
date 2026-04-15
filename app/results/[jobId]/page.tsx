@@ -112,7 +112,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const deadline = Date.now() + 60_000; // poll for up to 60 s
+    const deadline = Date.now() + 180_000; // poll for up to 3 min
 
     async function poll() {
       while (!cancelled && Date.now() < deadline) {
