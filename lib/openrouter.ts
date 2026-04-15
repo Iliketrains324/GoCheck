@@ -27,7 +27,7 @@ export const openrouter = {
 
 // Vision model for AFORM (PDF pages as images)
 export const VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct";
-// Fast text model for all other documents
+// Text model for all non-AFORM documents
 export const TEXT_MODEL = "deepseek/deepseek-chat";
 // Reasoning model for the coherence checker
 export const REASONING_MODEL = "deepseek/deepseek-r1";

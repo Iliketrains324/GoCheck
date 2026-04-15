@@ -4,14 +4,16 @@
 
 @layer base {
   :root {
-    --dlsu-green: #006B3C;
-    --dlsu-green-dark: #004A28;
-    --dlsu-green-light: #007C45;
-    --dlsu-gold: #FFD700;
+    --primary: #00280e;
+    --primary-container: #00401a;
+    --secondary-container: #feb700;
+    --on-tertiary-container: #1ab74c;
+    --surface: #f8f9fa;
+    --on-surface: #191c1d;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-surface text-on-surface;
     font-family: Inter, system-ui, -apple-system, sans-serif;
   }
 
@@ -22,36 +24,91 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-dlsu-green text-white px-6 py-3 rounded-lg font-semibold
-           hover:bg-dlsu-green-dark active:scale-95 transition-all duration-150
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply premium-gradient text-white px-8 py-4 rounded-xl font-headline font-bold
+           flex items-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95
+           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
+           disabled:hover:scale-100;
   }
 
   .btn-secondary {
-    @apply bg-white text-dlsu-green border-2 border-dlsu-green px-6 py-3
-           rounded-lg font-semibold hover:bg-dlsu-green-muted active:scale-95
-           transition-all duration-150;
+    @apply border border-outline-variant/30 text-primary bg-transparent px-8 py-4
+           rounded-xl font-headline font-bold hover:bg-surface-container
+           active:scale-95 transition-all duration-150;
   }
 
+  /* Tonal card — no borders, relies on background color shift */
   .card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+    @apply bg-surface-container-lowest rounded-xl;
+  }
+
+  .card-container {
+    @apply bg-surface-container rounded-xl;
   }
 
   .badge-major {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-           bg-red-100 text-red-800 border border-red-200;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+           bg-error-container text-on-error-container;
   }
 
   .badge-minor {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-           bg-yellow-100 text-yellow-800 border border-yellow-200;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+           bg-secondary-fixed text-secondary;
   }
 
   .badge-ok {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-           bg-green-100 text-green-800 border border-green-200;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+           bg-tertiary-fixed text-on-tertiary-fixed;
+  }
+
+  /* Bottom-border input — no 4-sided borders */
+  .input-field {
+    @apply w-full bg-surface-variant/40 border-0 border-b-2 border-primary
+           focus:ring-0 focus:border-secondary transition-all
+           font-headline font-semibold text-base py-3 px-0 rounded-none
+           placeholder:text-on-surface-variant/50;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    @apply bg-surface-container-low rounded-xl p-8 text-center
+           hover:bg-surface-container transition-all duration-200 cursor-pointer
+           ring-2 ring-transparent hover:ring-primary/20;
+  }
+
+  .upload-zone.active {
+    @apply bg-surface-container ring-primary/30;
   }
 }
+
+/* Premium gradient — signature texture for primary CTAs */
+.premium-gradient {
+  background: linear-gradient(135deg, #00280e 0%, #00401a 100%);
+}
+
+/* Glass nav */
+.glass-nav {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Progress bar animation */
 @keyframes pulse-bar {
@@ -61,15 +118,4 @@
 
 .animate-pulse-bar {
   animation: pulse-bar 1.5s ease-in-out infinite;
-}
-
-/* Upload zone hover */
-.upload-zone {
-  @apply border-2 border-dashed border-gray-300 rounded-xl p-8 text-center
-         hover:border-dlsu-green hover:bg-dlsu-green-muted transition-all duration-200
-         cursor-pointer;
-}
-
-.upload-zone.active {
-  @apply border-dlsu-green bg-dlsu-green-muted;
 }

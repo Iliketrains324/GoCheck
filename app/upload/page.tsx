@@ -3,15 +3,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Upload,
-  FileText,
-  X,
-  ChevronDown,
-  Loader2,
-  AlertCircle,
-  Eye,
-} from "lucide-react";
 import type { DocType } from "@/lib/supabase";
 import { DOC_TYPE_LABELS } from "@/lib/supabase";
 
@@ -60,7 +51,6 @@ export default function UploadPage() {
       prev.map((f) => (f.id === id ? { ...f, docType } : f))
     );
 
-    // If AFORM, render PDF pages to images client-side
     if (docType === "AFORM") {
       const file = uploadedFiles.find((f) => f.id === id)?.file;
       if (file) {
@@ -108,10 +98,30 @@ export default function UploadPage() {
 
       const { jobId } = data;
 
-      // Trigger processing (non-blocking from client's perspective)
-      fetch(`/api/jobs/${jobId}/process`, { method: "POST" }).catch(() => {});
-
+      // Navigate immediately — processing happens in the background driven by this client
       router.push(`/check/${jobId}`);
+
+      // Process each document one at a time (keeps each call under Vercel's 10s limit)
+      const docTypes = uploadedFiles.map((uf) => uf.docType as string);
+      for (const dt of docTypes) {
+        await fetch(`/api/jobs/${jobId}/process-doc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ docType: dt }),
+        }).catch(() => {});
+      }
+
+      // Run coherence check if multiple docs
+      if (docTypes.length > 1) {
+        await fetch(`/api/jobs/${jobId}/process-doc`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ docType: "COHERENCE" }),
+        }).catch(() => {});
+      } else {
+        // Single doc — mark as completed
+        await fetch(`/api/jobs/${jobId}/complete`, { method: "POST" }).catch(() => {});
+      }
     } catch (err) {
       setError((err as Error).message);
       setSubmitting(false);
@@ -119,32 +129,36 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dlsu-green-muted">
-      {/* Header */}
-      <header className="bg-dlsu-green text-white shadow-md">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-dlsu-green font-black">G</span>
-            </div>
-            <span className="font-bold text-lg">GoCheck</span>
-          </Link>
-          <span className="text-green-200 text-sm">Step 1: Upload Documents</span>
+    <div className="min-h-screen bg-surface font-body text-on-surface">
+      {/* Nav */}
+      <header className="bg-slate-50/80 glass-nav shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-8 py-4">
+        <Link href="/" className="text-2xl font-black tracking-tighter font-headline bg-gradient-to-r from-emerald-900 to-emerald-700 bg-clip-text text-transparent">
+          GoCheck
+        </Link>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-tertiary-container/10 rounded-full">
+          <span className="h-2 w-2 rounded-full bg-on-tertiary-container" />
+          <span className="text-xs font-semibold text-on-tertiary-container font-label">Step 1: Upload</span>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-10">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-dlsu-green mb-2">Upload Your Documents</h2>
-          <p className="text-gray-500">
-            Upload PDF files and select the document type for each. For A-Forms, pages will be
-            rendered automatically for visual analysis.
+      <main className="max-w-3xl mx-auto px-6 py-16">
+        {/* Page title */}
+        <div className="mb-12">
+          <span className="font-headline text-primary font-extrabold tracking-widest text-xs uppercase mb-3 block">
+            Document Auditor
+          </span>
+          <h1 className="font-headline text-4xl font-black tracking-tighter text-primary mb-4">
+            Upload Your Documents
+          </h1>
+          <p className="text-on-surface-variant leading-relaxed">
+            Upload PDF files and assign a document type to each one. For A-Forms, pages
+            will be rendered automatically for visual analysis.
           </p>
         </div>
 
         {/* Drop zone */}
         <div
-          className={`upload-zone mb-6 ${dragging ? "active" : ""}`}
+          className={`upload-zone mb-8 ${dragging ? "active" : ""}`}
           onDrop={handleDrop}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
@@ -158,62 +172,66 @@ export default function UploadPage() {
             accept=".pdf,application/pdf"
             onChange={(e) => e.target.files && addFiles(e.target.files)}
           />
-          <Upload className="mx-auto mb-3 text-dlsu-green" size={36} />
-          <p className="font-semibold text-dlsu-green text-lg mb-1">
+          <span className="material-symbols-outlined text-5xl text-primary/30 mb-4 block">upload_file</span>
+          <p className="font-headline font-bold text-primary text-lg mb-1">
             Drop PDF files here or click to browse
           </p>
-          <p className="text-gray-400 text-sm">Supports PDF files only · Multiple files allowed</p>
+          <p className="text-on-surface-variant text-sm">Supports PDF files only · Multiple files allowed</p>
         </div>
 
         {/* File list */}
         {uploadedFiles.length > 0 && (
-          <div className="space-y-3 mb-8">
-            <h3 className="font-semibold text-gray-700">
+          <div className="space-y-3 mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
               {uploadedFiles.length} file{uploadedFiles.length > 1 ? "s" : ""} selected
-            </h3>
+            </p>
             {uploadedFiles.map((uf) => (
-              <div key={uf.id} className="card p-4 flex items-center gap-4">
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <FileText className="text-red-500" size={18} />
+              <div key={uf.id} className="bg-surface-container-low rounded-xl p-5 flex items-center gap-4">
+                <div className="w-10 h-10 bg-surface-container-highest rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-on-surface-variant">description</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{uf.file.name}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="font-headline font-semibold text-on-surface truncate text-sm">
+                    {uf.file.name}
+                  </p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
                     {(uf.file.size / 1024).toFixed(0)} KB
                     {uf.docType === "AFORM" && uf.pages.length > 0 && (
-                      <span className="ml-2 text-dlsu-green font-medium">
-                        <Eye size={12} className="inline mr-1" />
-                        {uf.pages.length} pages rendered
+                      <span className="ml-2 text-on-tertiary-container font-semibold">
+                        · {uf.pages.length} pages rendered
                       </span>
                     )}
                     {uf.rendering && (
-                      <span className="ml-2 text-dlsu-green font-medium">
-                        <Loader2 size={12} className="inline mr-1 animate-spin" />
-                        Rendering pages...
+                      <span className="ml-2 text-primary font-semibold">
+                        · Rendering pages...
                       </span>
                     )}
                   </p>
                 </div>
-                <div className="relative flex-shrink-0">
+                {/* Doc type selector — bottom-border style */}
+                <div className="flex-shrink-0 relative min-w-[220px]">
                   <select
                     value={uf.docType}
                     onChange={(e) => handleDocTypeChange(uf.id, e.target.value as DocType)}
-                    className="appearance-none pl-3 pr-8 py-2 border border-gray-200 rounded-lg text-sm
-                               focus:outline-none focus:ring-2 focus:ring-dlsu-green focus:border-transparent
-                               bg-white text-gray-700 min-w-[200px]"
+                    className="w-full bg-transparent border-0 border-b-2 border-primary/40
+                               focus:border-primary focus:ring-0 outline-none transition-all
+                               font-body text-sm text-on-surface py-2 pr-6 cursor-pointer
+                               appearance-none"
                   >
                     <option value="" disabled>Select document type...</option>
                     {DOC_OPTIONS.map(([type, label]) => (
                       <option key={type} value={type}>{label}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                  <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-base">
+                    expand_more
+                  </span>
                 </div>
                 <button
                   onClick={() => removeFile(uf.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="text-on-surface-variant/40 hover:text-error transition-colors flex-shrink-0 p-1"
                 >
-                  <X size={18} />
+                  <span className="material-symbols-outlined text-base">close</span>
                 </button>
               </div>
             ))}
@@ -221,32 +239,36 @@ export default function UploadPage() {
         )}
 
         {error && (
-          <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6">
-            <AlertCircle size={18} />
+          <div className="flex items-center gap-3 bg-error-container text-on-error-container rounded-xl p-4 mb-6">
+            <span className="material-symbols-outlined text-base">error</span>
             <p className="text-sm">{error}</p>
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-dlsu-green text-sm hover:underline">
-            ← Back to Home
+        <div className="flex items-center justify-between pt-4">
+          <Link href="/" className="text-primary text-sm font-headline font-bold flex items-center gap-1 hover:opacity-70 transition-opacity">
+            <span className="material-symbols-outlined text-base">arrow_back</span>
+            Back
           </Link>
           <button
             onClick={handleSubmit}
             disabled={!canSubmit || submitting}
-            className="btn-primary flex items-center gap-2"
+            className="premium-gradient text-white px-8 py-4 rounded-xl font-headline font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             {submitting ? (
               <>
-                <Loader2 size={18} className="animate-spin" />
+                <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
                 Uploading...
               </>
             ) : (
               <>
-                Check Documents
-                <span className="bg-white/20 rounded px-1.5 py-0.5 text-xs">
-                  {uploadedFiles.length}
-                </span>
+                <span className="material-symbols-outlined text-base">analytics</span>
+                Run Audit
+                {uploadedFiles.length > 0 && (
+                  <span className="bg-white/20 rounded-full px-2 py-0.5 text-xs">
+                    {uploadedFiles.length}
+                  </span>
+                )}
               </>
             )}
           </button>
