@@ -112,25 +112,32 @@ export default function ResultsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const deadline = Date.now() + 60_000; // poll for up to 60 s
 
-    async function fetchWithRetry() {
-      for (let attempt = 0; attempt < 6; attempt++) {
-        if (cancelled) return;
-        const res = await fetch(`/api/jobs/${jobId}`);
+    async function poll() {
+      while (!cancelled && Date.now() < deadline) {
+        const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
         const data: Job = await res.json();
-        if (data.results || attempt === 5) {
-          if (!cancelled) {
-            setJob(data);
-            setLoading(false);
-          }
+
+        if (data.results) {
+          if (!cancelled) { setJob(data); setLoading(false); }
           return;
         }
-        // results not yet propagated — wait and retry
-        await new Promise((r) => setTimeout(r, 1500));
+
+        // No results yet — wait 2 s then try again
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
+      // Deadline hit or cancelled — show whatever we have
+      if (!cancelled) {
+        const res = await fetch(`/api/jobs/${jobId}`, { cache: "no-store" });
+        const data: Job = await res.json();
+        setJob(data);
+        setLoading(false);
       }
     }
 
-    fetchWithRetry();
+    poll();
     return () => { cancelled = true; };
   }, [jobId]);
 

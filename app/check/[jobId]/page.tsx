@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -42,20 +42,25 @@ export default function CheckPage() {
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  const [processingStarted, setProcessingStarted] = useState(false);
+  // useRef so the guard is never stale inside async callbacks / effect re-runs
+  const processingStarted = useRef(false);
 
   useEffect(() => {
-    fetch(`/api/jobs/${jobId}`)
+    fetch(`/api/jobs/${jobId}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data: Job) => {
         setJob(data);
         setLoading(false);
         if (data.status === "completed") {
-          setTimeout(() => router.push(`/results/${jobId}`), 1200);
-        } else if (data.status === "pending" && !processingStarted) {
-          // Check page owns processing — fires once, survives the page lifecycle
-          setProcessingStarted(true);
-          runProcessing(jobId, data.files);
+          setTimeout(() => router.push(`/results/${jobId}`), 800);
+        } else if (data.status === "pending" && !processingStarted.current) {
+          // useRef guard — immune to stale closures and effect re-fires
+          processingStarted.current = true;
+          runProcessing(jobId, data.files).then(() => {
+            // Redirect directly after all process-doc calls resolve —
+            // more reliable than waiting for Realtime alone
+            router.push(`/results/${jobId}`);
+          });
         }
       });
 

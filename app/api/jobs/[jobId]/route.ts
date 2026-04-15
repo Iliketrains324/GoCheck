@@ -35,5 +35,7 @@ export async function GET(
     job.results = sanitized;
   }
 
-  return NextResponse.json(job);
+  return NextResponse.json(job, {
+    headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+  });
 }
