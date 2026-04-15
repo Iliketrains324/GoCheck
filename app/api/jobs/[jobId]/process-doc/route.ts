@@ -65,7 +65,7 @@ export async function POST(
   }
 
   const body = await req.json().catch(() => ({}));
-  const { docType } = body as { docType?: string };
+  const { docType, isLast } = body as { docType?: string; isLast?: boolean };
 
   if (!docType || !ALLOWED_DOC_TYPES.has(docType)) {
     return NextResponse.json({ error: "Invalid docType" }, { status: 400 });
@@ -171,6 +171,7 @@ export async function POST(
 
   await db.from("jobs").update({
     results: newResults,
+    status: isLast ? "completed" : "processing",
     updated_at: new Date().toISOString(),
   }).eq("id", jobId);
 

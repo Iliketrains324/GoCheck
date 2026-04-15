@@ -17,21 +17,24 @@ const STATUS_LABELS: Record<string, string> = {
 
 async function runProcessing(jobId: string, files: Job["files"]) {
   const docTypes = (files ?? []).map((f) => f.docType);
-  for (const dt of docTypes) {
+  const hasCoherence = docTypes.length > 1;
+
+  for (let i = 0; i < docTypes.length; i++) {
+    const isLast = !hasCoherence && i === docTypes.length - 1;
     await fetch(`/api/jobs/${jobId}/process-doc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ docType: dt }),
+      body: JSON.stringify({ docType: docTypes[i], isLast }),
     });
   }
-  if (docTypes.length > 1) {
+
+  if (hasCoherence) {
     await fetch(`/api/jobs/${jobId}/process-doc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ docType: "COHERENCE" }),
+      body: JSON.stringify({ docType: "COHERENCE", isLast: true }),
     });
   }
-  await fetch(`/api/jobs/${jobId}/complete`, { method: "POST" });
 }
 
 export default function CheckPage() {
