@@ -39,3 +39,35 @@ export async function GET(
     headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
   });
 }
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { jobId: string } }
+) {
+  const { jobId } = params;
+
+  if (!UUID_RE.test(jobId)) {
+    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const { results, status, progress } = body as {
+    results?: unknown;
+    status?: string;
+    progress?: unknown;
+  };
+
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (results !== undefined) update.results = results;
+  if (status !== undefined) update.status = status;
+  if (progress !== undefined) update.progress = progress;
+
+  const db = getServiceClient();
+  const { error } = await db.from("jobs").update(update).eq("id", jobId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

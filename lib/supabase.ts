@@ -41,6 +41,8 @@ export interface JobFile {
   storagePath: string;
   /** base64-encoded page images, only populated for AFORM */
   pages?: string[];
+  /** plain text extracted client-side, populated for all non-AFORM docs */
+  text?: string;
 }
 
 export interface ProgressEntry {

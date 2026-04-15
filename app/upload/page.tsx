@@ -80,25 +80,28 @@ export default function UploadPage() {
     setError(null);
 
     try {
-      const form = new FormData();
-      for (const uf of uploadedFiles) {
-        form.append("files[]", uf.file);
-        form.append("docTypes[]", uf.docType);
-        if (uf.docType === "AFORM") {
-          uf.pages.forEach((page, pageIdx) => {
-            form.append(`aformPages[${uploadedFiles.indexOf(uf)}][${pageIdx}]`, page);
-          });
-        }
-      }
+      // Extract text from non-AFORM PDFs client-side
+      const { extractTextFromFile } = await import("@/lib/pdf");
+      const filesPayload = await Promise.all(
+        uploadedFiles.map(async (uf) => {
+          if (uf.docType === "AFORM") {
+            return { docType: uf.docType, fileName: uf.file.name, pages: uf.pages };
+          }
+          const text = await extractTextFromFile(uf.file);
+          return { docType: uf.docType, fileName: uf.file.name, text };
+        })
+      );
 
-      const res = await fetch("/api/jobs", { method: "POST", body: form });
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: filesPayload }),
+      });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+      if (!res.ok) throw new Error(data.error ?? "Failed to create job");
 
-      const { jobId } = data;
-      // Check page takes over processing once it loads
-      router.push(`/check/${jobId}`);
+      router.push(`/check/${data.jobId}`);
     } catch (err) {
       setError((err as Error).message);
       setSubmitting(false);
@@ -185,7 +188,7 @@ export default function UploadPage() {
                     )}
                   </p>
                 </div>
-                {/* Doc type selector — bottom-border style */}
+                {/* Doc type selector */}
                 <div className="flex-shrink-0 relative min-w-[220px]">
                   <select
                     value={uf.docType}
@@ -235,7 +238,7 @@ export default function UploadPage() {
             {submitting ? (
               <>
                 <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
-                Uploading...
+                Preparing...
               </>
             ) : (
               <>

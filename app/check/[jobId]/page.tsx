@@ -3,9 +3,25 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 import { DOC_TYPE_LABELS } from "@/lib/supabase";
-import type { Job, ProgressEntry, DocType } from "@/lib/supabase";
+import type { Job, ProgressEntry, DocType, DocResult } from "@/lib/supabase";
+import { checkAform } from "@/lib/agents/aform";
+import { checkPpr } from "@/lib/agents/ppr";
+import { checkCoherence } from "@/lib/agents/coherence";
+import {
+  checkLetterOfInvitation,
+  checkCredentials,
+  checkVenueReservation,
+  checkMeetingAgenda,
+  checkRecruitmentMechanics,
+  checkListOfQuestions,
+  checkElectionMechanics,
+  checkGeneralContestMechanics,
+  checkAcademicContestMechanics,
+  checkSamplePub,
+  checkPreRegistrationForm,
+} from "@/lib/agents/other-docs";
+import type { AgentInput, AgentOutput } from "@/lib/agents/types";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Waiting...",
@@ -15,36 +31,29 @@ const STATUS_LABELS: Record<string, string> = {
   failed: "Failed",
 };
 
-async function runProcessing(jobId: string, files: Job["files"]): Promise<boolean> {
-  const docTypes = (files ?? []).map((f) => f.docType);
-  const hasCoherence = docTypes.length > 1;
+const AGENT_MAP: Partial<Record<DocType, (input: AgentInput) => Promise<AgentOutput>>> = {
+  AFORM: checkAform,
+  PPR: checkPpr,
+  LETTER_OF_INVITATION: checkLetterOfInvitation,
+  CREDENTIALS: checkCredentials,
+  VENUE_RESERVATION: checkVenueReservation,
+  MEETING_AGENDA: checkMeetingAgenda,
+  RECRUITMENT_MECHANICS: checkRecruitmentMechanics,
+  LIST_OF_QUESTIONS: checkListOfQuestions,
+  ELECTION_MECHANICS: checkElectionMechanics,
+  GENERAL_CONTEST_MECHANICS: checkGeneralContestMechanics,
+  ACADEMIC_CONTEST_MECHANICS: checkAcademicContestMechanics,
+  SAMPLE_PUB: checkSamplePub,
+  PRE_REGISTRATION_FORM: checkPreRegistrationForm,
+};
 
-  for (let i = 0; i < docTypes.length; i++) {
-    const isLast = !hasCoherence && i === docTypes.length - 1;
-    const res = await fetch(`/api/jobs/${jobId}/process-doc`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ docType: docTypes[i], isLast }),
-    });
-    if (!res.ok) {
-      console.error(`[runProcessing] process-doc failed for ${docTypes[i]}:`, res.status);
-      return false;
-    }
-  }
-
-  if (hasCoherence) {
-    const res = await fetch(`/api/jobs/${jobId}/process-doc`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ docType: "COHERENCE", isLast: true }),
-    });
-    if (!res.ok) {
-      console.error("[runProcessing] COHERENCE process-doc failed:", res.status);
-      return false;
-    }
-  }
-
-  return true;
+/** Fire-and-forget PATCH to keep DB in sync. Errors are non-fatal. */
+async function patchJob(jobId: string, update: Record<string, unknown>) {
+  await fetch(`/api/jobs/${jobId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  }).catch((err) => console.error("[patchJob]", err));
 }
 
 export default function CheckPage() {
@@ -52,44 +61,34 @@ export default function CheckPage() {
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  // useRef so the guard is never stale inside async callbacks / effect re-runs
   const processingStarted = useRef(false);
 
   useEffect(() => {
     fetch(`/api/jobs/${jobId}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((data: Job) => {
+      .then(async (data: Job) => {
         setJob(data);
         setLoading(false);
+
         if (data.status === "completed") {
           setTimeout(() => router.push(`/results/${jobId}`), 800);
-        } else if (data.status === "pending" && !processingStarted.current) {
-          // useRef guard — immune to stale closures and effect re-fires
+          return;
+        }
+
+        if (data.status === "pending" && !processingStarted.current) {
           processingStarted.current = true;
-          runProcessing(jobId, data.files).then(() => {
-            // Redirect directly after all process-doc calls resolve —
-            // more reliable than waiting for Realtime alone
-            router.push(`/results/${jobId}`);
-          });
-        }
-      });
-
-    const channel = supabase
-      .channel(`job:${jobId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "jobs", filter: `id=eq.${jobId}` },
-        (payload) => {
-          const updated = payload.new as Job;
-          setJob(updated);
-          if (updated.status === "completed") {
-            setTimeout(() => router.push(`/results/${jobId}`), 1200);
+          try {
+            await runAllAgents(jobId, data, setJob);
+          } catch (err) {
+            console.error("[CheckPage] processing failed:", err);
           }
+          router.push(`/results/${jobId}`);
         }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+      })
+      .catch((err) => {
+        console.error("[CheckPage] fetch error:", err);
+        setLoading(false);
+      });
   }, [jobId, router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
@@ -169,7 +168,7 @@ export default function CheckPage() {
 
         {/* Split view */}
         <section className="flex-grow flex overflow-hidden">
-          {/* Left: document list (document canvas) */}
+          {/* Left: document list */}
           <div className="w-7/12 bg-surface-container-low p-8 overflow-y-auto no-scrollbar">
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Overall progress */}
@@ -303,18 +302,12 @@ export default function CheckPage() {
                     <div
                       key={file.docType}
                       className={`p-4 rounded-xl flex items-center gap-4 ${
-                        st === "processing"
-                          ? "bg-primary-container text-white"
-                          : "bg-surface-container-low"
+                        st === "processing" ? "bg-primary-container text-white" : "bg-surface-container-low"
                       }`}
                     >
                       <div
                         className={`flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 ${
-                          st === "done"
-                            ? "bg-on-tertiary-container"
-                            : st === "processing"
-                            ? "bg-on-primary-container"
-                            : "bg-surface-container"
+                          st === "done" ? "bg-on-tertiary-container" : st === "processing" ? "bg-on-primary-container" : "bg-surface-container"
                         }`}
                       >
                         <span className={`material-symbols-outlined text-sm ${st === "done" || st === "processing" ? "text-white" : "text-on-surface-variant"}`}>
@@ -329,7 +322,7 @@ export default function CheckPage() {
                           <p className="text-[10px] text-primary-fixed/70 truncate">{prog.message}</p>
                         )}
                         {st === "processing" && (
-                          <div className={`w-full h-1 rounded-full mt-2 overflow-hidden ${st === "processing" ? "bg-primary" : "bg-surface-container-highest"}`}>
+                          <div className="w-full h-1 rounded-full mt-2 overflow-hidden bg-primary">
                             <div className="bg-on-primary-container h-full w-[60%] animate-pulse-bar" />
                           </div>
                         )}
@@ -366,15 +359,11 @@ export default function CheckPage() {
               <div className="grid grid-cols-2 gap-3 mt-8">
                 <div className="p-4 bg-surface-container rounded-xl">
                   <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider block">Docs Checked</span>
-                  <p className="text-2xl font-headline font-black text-on-tertiary-container">
-                    {doneCount}
-                  </p>
+                  <p className="text-2xl font-headline font-black text-on-tertiary-container">{doneCount}</p>
                 </div>
                 <div className="p-4 bg-surface-container rounded-xl">
                   <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider block">Total</span>
-                  <p className="text-2xl font-headline font-black text-primary">
-                    {files.length}
-                  </p>
+                  <p className="text-2xl font-headline font-black text-primary">{files.length}</p>
                 </div>
               </div>
 
@@ -388,14 +377,12 @@ export default function CheckPage() {
                   )}
                 </div>
                 <div className="bg-surface-container rounded-xl p-4 space-y-2 max-h-48 overflow-y-auto no-scrollbar font-label">
-                  {/* Job status line */}
                   <div className="flex items-start gap-2">
                     <span className="text-on-surface-variant/40 text-[10px] font-mono mt-0.5 flex-shrink-0">SYS</span>
                     <span className="text-[11px] text-on-surface-variant">
                       Job <span className="font-mono text-primary">{jobId.slice(0, 8)}</span> — status: <span className="font-bold">{jobStatus}</span>
                     </span>
                   </div>
-                  {/* Progress entries */}
                   {progress.map((p, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <span className={`text-[10px] font-mono mt-0.5 flex-shrink-0 ${
@@ -403,9 +390,7 @@ export default function CheckPage() {
                       }`}>
                         {p.status === "error" ? "ERR" : p.status === "done" ? "OK " : "RUN"}
                       </span>
-                      <span className={`text-[11px] leading-relaxed ${
-                        p.status === "error" ? "text-error" : "text-on-surface-variant"
-                      }`}>
+                      <span className={`text-[11px] leading-relaxed ${p.status === "error" ? "text-error" : "text-on-surface-variant"}`}>
                         [{DOC_TYPE_LABELS[p.docType as DocType] ?? p.docType}] {p.message ?? p.status}
                       </span>
                     </div>
@@ -413,13 +398,7 @@ export default function CheckPage() {
                   {progress.length === 0 && jobStatus === "pending" && (
                     <div className="flex items-start gap-2">
                       <span className="text-[10px] font-mono text-on-surface-variant/40 mt-0.5">SYS</span>
-                      <span className="text-[11px] text-on-surface-variant/60">Waiting for AI agents to start...</span>
-                    </div>
-                  )}
-                  {jobStatus === "failed" && job?.error && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] font-mono text-error mt-0.5">ERR</span>
-                      <span className="text-[11px] text-error">{job.error}</span>
+                      <span className="text-[11px] text-on-surface-variant/60">Starting AI agents...</span>
                     </div>
                   )}
                 </div>
@@ -448,4 +427,97 @@ export default function CheckPage() {
       </main>
     </div>
   );
+}
+
+// ─── Client-side agent runner ─────────────────────────────────────────────────
+
+async function runAllAgents(
+  jobId: string,
+  initialJob: Job,
+  setJob: (job: Job) => void
+) {
+  const files = initialJob.files ?? [];
+  const hasCoherence = files.length > 1;
+  const results: Record<string, DocResult> = {};
+  let progress: ProgressEntry[] = [...(initialJob.progress ?? [])];
+
+  function updateJobState(patch: Partial<Job>) {
+    const next = { ...initialJob, progress: [...progress], results: results as Job["results"], ...patch };
+    setJob(next);
+  }
+
+  async function markProgress(docType: string, status: ProgressEntry["status"], message?: string) {
+    const entry: ProgressEntry = {
+      docType: docType as DocType,
+      status,
+      message,
+      timestamp: new Date().toISOString(),
+    };
+    const idx = progress.findIndex((p) => p.docType === docType);
+    if (idx >= 0) progress[idx] = entry; else progress.push(entry);
+    updateJobState({});
+    // Persist progress to DB in background (non-blocking)
+    patchJob(jobId, { progress }).catch(() => {});
+  }
+
+  // Mark job as processing on first doc
+  await patchJob(jobId, { status: "processing" });
+  updateJobState({ status: "processing" });
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const docType = file.docType as DocType;
+    const agentFn = AGENT_MAP[docType];
+
+    await markProgress(docType, "processing", `Checking ${docType}...`);
+
+    let output: AgentOutput;
+    try {
+      if (!agentFn) {
+        throw new Error(`No agent for ${docType}`);
+      }
+      output = await agentFn({ docType, text: file.text, pages: file.pages ?? [] });
+    } catch (err) {
+      output = {
+        docType,
+        status: "error",
+        issues: [],
+        summary: `Error: ${(err as Error).message}`,
+      };
+    }
+
+    results[docType] = { ...output, rawText: file.text?.slice(0, 3000) };
+    await markProgress(docType, "done", output.summary);
+
+    // Save incremental results to DB
+    const isLast = !hasCoherence && i === files.length - 1;
+    await patchJob(jobId, {
+      results,
+      status: isLast ? "completed" : "processing",
+    });
+    if (isLast) updateJobState({ status: "completed" });
+  }
+
+  // Run coherence check if multiple documents
+  if (hasCoherence) {
+    await markProgress("COHERENCE", "processing", "Running cross-document coherence check...");
+
+    let coherenceOutput: AgentOutput;
+    try {
+      coherenceOutput = await checkCoherence({ docType: "AFORM", allResults: results });
+    } catch (err) {
+      coherenceOutput = {
+        docType: "AFORM",
+        status: "error",
+        issues: [],
+        summary: `Coherence error: ${(err as Error).message}`,
+      };
+    }
+
+    results["COHERENCE"] = { ...coherenceOutput, docType: "AFORM" };
+    await markProgress("COHERENCE", "done", coherenceOutput.summary);
+
+    await patchJob(jobId, { results, status: "completed" });
+    updateJobState({ status: "completed" });
+  }
 }

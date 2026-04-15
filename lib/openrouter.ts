@@ -1,19 +1,14 @@
 import OpenAI from "openai";
 
-let _client: OpenAI | null = null;
-
 function getClient(): OpenAI {
-  if (!_client) {
-    _client = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
-      apiKey: process.env.OPENROUTER_API_KEY ?? "placeholder",
-      defaultHeaders: {
-        "HTTP-Referer": "https://gocheck.vercel.app",
-        "X-Title": "GoCheck - CSO Document Checker",
-      },
-    });
-  }
-  return _client;
+  return new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY ?? "",
+    defaultHeaders: {
+      "HTTP-Referer": "https://gocheck-psi.vercel.app",
+      "X-Title": "GoCheck - CSO Document Checker",
+    },
+  });
 }
 
 export const openrouter = {
@@ -29,8 +24,8 @@ export const openrouter = {
 export const VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct";
 // Text model for all non-AFORM documents
 export const TEXT_MODEL = "deepseek/deepseek-chat";
-// Reasoning model for the coherence checker
-export const REASONING_MODEL = "deepseek/deepseek-r1";
+// Coherence checker — deepseek-chat is fast enough and won't timeout on Vercel
+export const REASONING_MODEL = "deepseek/deepseek-chat";
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";

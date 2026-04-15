@@ -1,16 +1,23 @@
 /**
- * Server-side PDF text extraction using pdf-parse.
- * AFORM uses vision (client-rendered images) — this is for all other doc types.
+ * Client-side PDF text extraction using pdf.js.
+ * Replaces the old server-side pdf-parse approach — runs entirely in the browser.
  */
+export async function extractTextFromFile(file: File): Promise<string> {
+  const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
+  GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.3.136/build/pdf.worker.min.mjs`;
 
-export async function extractTextFromBuffer(buffer: Buffer): Promise<string> {
-  // Dynamic import to avoid issues with server/client bundling
-  const pdfParse = (await import("pdf-parse")).default;
-  const data = await pdfParse(buffer);
-  return data.text;
-}
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await getDocument({ data: arrayBuffer }).promise;
 
-export async function extractTextFromBase64(base64: string): Promise<string> {
-  const buffer = Buffer.from(base64, "base64");
-  return extractTextFromBuffer(buffer);
+  const pageTexts: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ");
+    pageTexts.push(pageText);
+  }
+
+  return pageTexts.join("\n").trim();
 }
