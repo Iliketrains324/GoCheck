@@ -111,12 +111,27 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/jobs/${jobId}`)
-      .then((r) => r.json())
-      .then((data: Job) => {
-        setJob(data);
-        setLoading(false);
-      });
+    let cancelled = false;
+
+    async function fetchWithRetry() {
+      for (let attempt = 0; attempt < 6; attempt++) {
+        if (cancelled) return;
+        const res = await fetch(`/api/jobs/${jobId}`);
+        const data: Job = await res.json();
+        if (data.results || attempt === 5) {
+          if (!cancelled) {
+            setJob(data);
+            setLoading(false);
+          }
+          return;
+        }
+        // results not yet propagated — wait and retry
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+
+    fetchWithRetry();
+    return () => { cancelled = true; };
   }, [jobId]);
 
   const handleDownload = () => {
