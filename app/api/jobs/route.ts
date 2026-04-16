@@ -16,6 +16,10 @@ const ALLOWED_DOC_TYPES = new Set([
   "PRE_REGISTRATION_FORM",
 ]);
 const MAX_FILES = 13;
+// Max extracted text per document (100 KB) and max base64 pages per AFORM doc (10 pages × ~3 MB each = 30 MB hard cap per file)
+const MAX_TEXT_BYTES = 100_000;
+const MAX_PAGES = 10;
+const MAX_PAGE_BYTES = 3_000_000; // ~3 MB per page image
 
 export async function POST(req: NextRequest) {
   const db = getServiceClient();
@@ -42,6 +46,19 @@ export async function POST(req: NextRequest) {
     for (const f of files) {
       if (!ALLOWED_DOC_TYPES.has(f.docType)) {
         return NextResponse.json({ error: `Invalid document type: ${f.docType}` }, { status: 400 });
+      }
+      if (f.text && f.text.length > MAX_TEXT_BYTES) {
+        return NextResponse.json({ error: `Text payload too large for ${f.docType} (max 100 KB)` }, { status: 400 });
+      }
+      if (f.pages) {
+        if (f.pages.length > MAX_PAGES) {
+          return NextResponse.json({ error: `Too many pages for ${f.docType} (max ${MAX_PAGES})` }, { status: 400 });
+        }
+        for (const page of f.pages) {
+          if (page.length > MAX_PAGE_BYTES) {
+            return NextResponse.json({ error: `Page image too large for ${f.docType} (max 3 MB per page)` }, { status: 400 });
+          }
+        }
       }
     }
 

@@ -31,7 +31,8 @@ function parseAgentResponse(raw: string, docType: DocType): AgentOutput {
 async function runTextCheck(
   docType: DocType,
   systemPrompt: string,
-  text: string
+  text: string,
+  onToken?: (token: string) => void
 ): Promise<AgentOutput> {
   if (!text) {
     return { docType, status: "error", issues: [], summary: "No text extracted." };
@@ -42,7 +43,8 @@ async function runTextCheck(
         { role: "system", content: systemPrompt },
         { role: "user", content: `Review this document and return the JSON result.\n\n---\n${text}\n---` },
       ],
-      TEXT_MODEL
+      TEXT_MODEL,
+      { onToken }
     );
     return parseAgentResponse(raw, docType);
   } catch (err) {
@@ -72,7 +74,7 @@ WRONG EXAMPLES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkLetterOfInvitation(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("LETTER_OF_INVITATION", LETTER_PROMPT, input.text ?? "");
+  return runTextCheck("LETTER_OF_INVITATION", LETTER_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── CREDENTIALS OF SPEAKERS ─────────────────────────────────────────────────
@@ -104,7 +106,7 @@ ROUTING RULE:
 ${ISSUE_SCHEMA}`;
 
 export async function checkCredentials(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("CREDENTIALS", CREDENTIALS_PROMPT, input.text ?? "");
+  return runTextCheck("CREDENTIALS", CREDENTIALS_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── VENUE RESERVATION TICKET ─────────────────────────────────────────────────
@@ -129,7 +131,7 @@ CHECK:
 ${ISSUE_SCHEMA}`;
 
 export async function checkVenueReservation(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("VENUE_RESERVATION", VENUE_PROMPT, input.text ?? "");
+  return runTextCheck("VENUE_RESERVATION", VENUE_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── MEETING AGENDA ──────────────────────────────────────────────────────────
@@ -145,7 +147,7 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkMeetingAgenda(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("MEETING_AGENDA", MEETING_AGENDA_PROMPT, input.text ?? "");
+  return runTextCheck("MEETING_AGENDA", MEETING_AGENDA_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── RECRUITMENT/AUDITION MECHANICS ──────────────────────────────────────────
@@ -161,7 +163,7 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkRecruitmentMechanics(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("RECRUITMENT_MECHANICS", RECRUITMENT_PROMPT, input.text ?? "");
+  return runTextCheck("RECRUITMENT_MECHANICS", RECRUITMENT_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── LIST OF QUESTIONS ────────────────────────────────────────────────────────
@@ -177,7 +179,7 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkListOfQuestions(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("LIST_OF_QUESTIONS", QUESTIONS_PROMPT, input.text ?? "");
+  return runTextCheck("LIST_OF_QUESTIONS", QUESTIONS_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── ELECTION MECHANICS ───────────────────────────────────────────────────────
@@ -193,7 +195,7 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkElectionMechanics(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("ELECTION_MECHANICS", ELECTION_PROMPT, input.text ?? "");
+  return runTextCheck("ELECTION_MECHANICS", ELECTION_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── GENERAL CONTEST MECHANICS ────────────────────────────────────────────────
@@ -210,7 +212,7 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkGeneralContestMechanics(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("GENERAL_CONTEST_MECHANICS", GENERAL_CONTEST_PROMPT, input.text ?? "");
+  return runTextCheck("GENERAL_CONTEST_MECHANICS", GENERAL_CONTEST_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── ACADEMIC CONTEST MECHANICS ───────────────────────────────────────────────
@@ -228,7 +230,7 @@ RULES (same as General Contest Mechanics PLUS):
 ${ISSUE_SCHEMA}`;
 
 export async function checkAcademicContestMechanics(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("ACADEMIC_CONTEST_MECHANICS", ACADEMIC_CONTEST_PROMPT, input.text ?? "");
+  return runTextCheck("ACADEMIC_CONTEST_MECHANICS", ACADEMIC_CONTEST_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── SAMPLE PUB ───────────────────────────────────────────────────────────────
@@ -246,7 +248,7 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkSamplePub(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("SAMPLE_PUB", SAMPLE_PUB_PROMPT, input.text ?? "");
+  return runTextCheck("SAMPLE_PUB", SAMPLE_PUB_PROMPT, input.text ?? "", input.onToken);
 }
 
 // ─── PRE-REGISTRATION FORM ────────────────────────────────────────────────────
@@ -264,5 +266,5 @@ RULES:
 ${ISSUE_SCHEMA}`;
 
 export async function checkPreRegistrationForm(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("PRE_REGISTRATION_FORM", PREREG_PROMPT, input.text ?? "");
+  return runTextCheck("PRE_REGISTRATION_FORM", PREREG_PROMPT, input.text ?? "", input.onToken);
 }

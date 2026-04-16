@@ -62,7 +62,7 @@ ${docSummaries}`,
   ];
 
   try {
-    const raw = await callModel(messages, REASONING_MODEL, { maxTokens: 4096 });
+    const raw = await callModel(messages, REASONING_MODEL, { maxTokens: 4096, onToken: input.onToken });
     const result = parseCoherenceResponse(raw);
     return result;
   } catch (err) {

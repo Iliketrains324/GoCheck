@@ -263,21 +263,21 @@ export default function UploadPage() {
 async function renderPdfToImages(file: File): Promise<string[]> {
   try {
     const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
-    GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.3.136/build/pdf.worker.min.mjs`;
+    GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs`;
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await getDocument({ data: arrayBuffer }).promise;
     const pages: string[] = [];
 
-    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+    for (let i = 1; i <= Math.min(pdf.numPages, 8); i++) {
       const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.5 });
+      const viewport = page.getViewport({ scale: 1.0 });
       const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const ctx = canvas.getContext("2d")!;
       await page.render({ canvasContext: ctx, viewport }).promise;
-      pages.push(canvas.toDataURL("image/png"));
+      pages.push(canvas.toDataURL("image/jpeg", 0.82));
     }
 
     return pages;

@@ -10,6 +10,8 @@ export interface AgentInput {
   pages?: string[];
   /** For coherence: all other doc results */
   allResults?: Record<string, DocResult>;
+  /** Optional streaming token callback */
+  onToken?: (token: string) => void;
 }
 
 export interface AgentOutput {
@@ -40,4 +42,5 @@ Rules:
 - If no issues found, return status "ok" and empty issues array
 - Be specific in field names (e.g. "Section I - Title of Activity" not just "title")
 - Do NOT include issues that are not violations of the checking guide
+- NEVER flag cross-document inconsistencies or "cannot verify against [other doc]" issues. You only have access to THIS document's text. Cross-document checks are handled by a separate coherence agent.
 `;

@@ -85,7 +85,7 @@ Check each field against the rules in the system prompt.
 Return a JSON object with all violations found.`;
 
   try {
-    const raw = await callVisionModel(SYSTEM_PROMPT, userPrompt, pages);
+    const raw = await callVisionModel(SYSTEM_PROMPT, userPrompt, pages, input.onToken);
     return parseAgentResponse(raw, "AFORM");
   } catch (err) {
     return {

@@ -106,7 +106,7 @@ export async function checkPpr(input: AgentInput): Promise<AgentOutput> {
   ];
 
   try {
-    const raw = await callModel(messages, TEXT_MODEL);
+    const raw = await callModel(messages, TEXT_MODEL, { onToken: input.onToken });
     return parseAgentResponse(raw, "PPR");
   } catch (err) {
     return {

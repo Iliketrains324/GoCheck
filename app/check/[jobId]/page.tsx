@@ -62,6 +62,9 @@ export default function CheckPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const processingStarted = useRef(false);
+  const [streamContent, setStreamContent] = useState("");
+  const [streamDocLabel, setStreamDocLabel] = useState("");
+  const streamBoxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/jobs/${jobId}`, { cache: "no-store" })
@@ -78,7 +81,13 @@ export default function CheckPage() {
         if (data.status === "pending" && !processingStarted.current) {
           processingStarted.current = true;
           try {
-            await runAllAgents(jobId, data, setJob);
+            await runAllAgents(
+              jobId,
+              data,
+              setJob,
+              (token) => setStreamContent((prev) => prev + token),
+              (label) => { setStreamContent(""); setStreamDocLabel(label); }
+            );
           } catch (err) {
             console.error("[CheckPage] processing failed:", err);
           }
@@ -90,6 +99,12 @@ export default function CheckPage() {
         setLoading(false);
       });
   }, [jobId, router]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (streamBoxRef.current) {
+      streamBoxRef.current.scrollTop = streamBoxRef.current.scrollHeight;
+    }
+  }, [streamContent]);
 
   if (loading) {
     return (
@@ -367,6 +382,41 @@ export default function CheckPage() {
                 </div>
               </div>
 
+              {/* Live AI Output */}
+              <div className="mt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-on-surface-variant text-sm">smart_toy</span>
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider">
+                    Live AI Output
+                  </span>
+                  {streamDocLabel && (
+                    <span className="ml-auto text-[9px] font-mono text-primary truncate max-w-[120px]">
+                      {streamDocLabel}
+                    </span>
+                  )}
+                  {jobStatus !== "completed" && jobStatus !== "failed" && (
+                    <span className="flex h-1.5 w-1.5 rounded-full bg-on-tertiary-container animate-pulse" />
+                  )}
+                </div>
+                <div
+                  ref={streamBoxRef}
+                  className="bg-[#0d1117] rounded-xl p-4 max-h-56 overflow-y-auto no-scrollbar font-mono"
+                >
+                  {streamContent ? (
+                    <p className="text-[10px] text-green-400 leading-relaxed whitespace-pre-wrap break-words">
+                      {streamContent}
+                      {jobStatus !== "completed" && (
+                        <span className="inline-block w-1.5 h-3 bg-green-400 ml-0.5 animate-pulse" />
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-green-400/30 font-mono">
+                      {jobStatus === "pending" ? "Waiting for AI..." : jobStatus === "completed" ? "Analysis complete." : "Initializing..."}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Live Diagnostic Logs */}
               <div className="mt-6">
                 <div className="flex items-center gap-2 mb-3">
@@ -434,7 +484,9 @@ export default function CheckPage() {
 async function runAllAgents(
   jobId: string,
   initialJob: Job,
-  setJob: (job: Job) => void
+  setJob: (job: Job) => void,
+  onStreamToken: (token: string) => void,
+  onStreamDocChange: (label: string) => void
 ) {
   const files = initialJob.files ?? [];
   const hasCoherence = files.length > 1;
@@ -470,13 +522,19 @@ async function runAllAgents(
     const agentFn = AGENT_MAP[docType];
 
     await markProgress(docType, "processing", `Checking ${docType}...`);
+    onStreamDocChange(DOC_TYPE_LABELS[docType] ?? docType);
 
     let output: AgentOutput;
     try {
       if (!agentFn) {
         throw new Error(`No agent for ${docType}`);
       }
-      output = await agentFn({ docType, text: file.text, pages: file.pages ?? [] });
+      output = await agentFn({
+        docType,
+        text: file.text,
+        pages: file.pages ?? [],
+        onToken: onStreamToken,
+      });
     } catch (err) {
       output = {
         docType,
@@ -502,9 +560,14 @@ async function runAllAgents(
   if (hasCoherence) {
     await markProgress("COHERENCE", "processing", "Running cross-document coherence check...");
 
+    onStreamDocChange("Cross-Document Coherence Check");
     let coherenceOutput: AgentOutput;
     try {
-      coherenceOutput = await checkCoherence({ docType: "AFORM", allResults: results });
+      coherenceOutput = await checkCoherence({
+        docType: "AFORM",
+        allResults: results,
+        onToken: onStreamToken,
+      });
     } catch (err) {
       coherenceOutput = {
         docType: "AFORM",
