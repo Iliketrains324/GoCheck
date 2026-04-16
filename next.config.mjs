@@ -16,8 +16,8 @@ const nextConfig = {
               "default-src 'self'",
               // Next.js inline scripts + React hydration
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              // pdfjs worker loaded from unpkg CDN
-              "worker-src blob: https://unpkg.com",
+              // pdfjs worker served from our own origin (/pdf.worker.min.mjs)
+              "worker-src 'self' blob:",
               // Supabase + OpenRouter API calls
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://openrouter.ai",
               // Google Fonts + Material Symbols

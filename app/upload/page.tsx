@@ -263,7 +263,7 @@ export default function UploadPage() {
 async function renderPdfToImages(file: File): Promise<string[]> {
   try {
     const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
-    GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs`;
+    GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await getDocument({ data: arrayBuffer }).promise;
