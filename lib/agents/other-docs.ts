@@ -139,8 +139,9 @@ export async function checkVenueReservation(input: AgentInput): Promise<AgentOut
 const MEETING_AGENDA_PROMPT = `You are checking a Meeting Agenda for a DLSU CSO event.
 
 RULES:
-- Activity Details must be CONSISTENT with the A-Form and PPR
-  (same title, date, time, venue, nature of activity, type of activity)
+- Activity Details within this document must be internally consistent
+  (title, date, time, venue, nature of activity, type of activity must not contradict each other)
+- Cross-document consistency (vs. A-Form or PPR) is handled separately — do not flag it here
 - Signatories must be COMPLETE (all required positions must have signed)
 - Required for all activities that include meetings
 
@@ -155,7 +156,8 @@ export async function checkMeetingAgenda(input: AgentInput): Promise<AgentOutput
 const RECRUITMENT_PROMPT = `You are checking Recruitment/Audition Mechanics for a DLSU CSO event.
 
 RULES:
-- Activity Details must be CONSISTENT with the A-Form and PPR
+- Activity Details within this document must be internally consistent
+- Cross-document consistency (vs. A-Form or PPR) is handled separately — do not flag it here
 - Sections I through V must ALWAYS be filled out
 - Section VI is OPTIONAL (depends on the activity)
 - Required for all activities that include recruitment or auditions
@@ -187,7 +189,8 @@ export async function checkListOfQuestions(input: AgentInput): Promise<AgentOutp
 const ELECTION_PROMPT = `You are checking Election Mechanics for a DLSU CSO election activity.
 
 RULES:
-- Activity Details must be CONSISTENT with the A-Form and PPR
+- Activity Details within this document must be internally consistent
+- Cross-document consistency (vs. A-Form or PPR) is handled separately — do not flag it here
 - Sections I through V must ALWAYS be filled out
 - Section VI (Miting de Avance section) can be OMITTED if NO Miting de Avance will be conducted
 - Required for all activities that include elections
@@ -203,8 +206,8 @@ export async function checkElectionMechanics(input: AgentInput): Promise<AgentOu
 const GENERAL_CONTEST_PROMPT = `You are checking General Contest Mechanics for a DLSU CSO contest activity.
 
 RULES:
-- Activity Details must be CONSISTENT with the A-Form and PPR
-- Total Expense for Prizes must match the prize details in Section V of the PPR
+- Activity Details within this document must be internally consistent
+- Cross-document consistency (vs. A-Form or PPR) is handled separately — do not flag it here
 - Prize Details must include: price per quantity of each prize
 - Position listed under Affiliation must NOT be "Project Head"
 - If prizes come from X-deals (sponsors, in-kind), a note must appear below the prize table
@@ -220,8 +223,8 @@ export async function checkGeneralContestMechanics(input: AgentInput): Promise<A
 const ACADEMIC_CONTEST_PROMPT = `You are checking Academic Contest Mechanics for a DLSU CSO academic contest activity.
 
 RULES (same as General Contest Mechanics PLUS):
-- Activity Details must be CONSISTENT with the A-Form and PPR
-- Total Expense for Prizes must match Section V of the PPR
+- Activity Details within this document must be internally consistent
+- Cross-document consistency (vs. A-Form or PPR) is handled separately — do not flag it here
 - Prize Details must include: price per quantity
 - Position under Affiliation must NOT be "Project Head"
 - If prizes are X-deals: note must be below the table
