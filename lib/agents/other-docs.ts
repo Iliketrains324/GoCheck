@@ -5,7 +5,7 @@
 
 import { callModel, TEXT_MODEL } from "@/lib/openrouter";
 import type { AgentInput, AgentOutput, DocType } from "./types";
-import { ISSUE_SCHEMA } from "./types";
+import { ISSUE_SCHEMA, WRITING_CHECKS } from "./types";
 
 function parseAgentResponse(raw: string, docType: DocType): AgentOutput {
   try {
@@ -71,6 +71,13 @@ WRONG EXAMPLES:
 - Missing date, time, venue, or contact details
 - Number of letters ≠ number of speakers
 
+WRITING QUALITY — This is a formal business letter. Flag:
+- Incomplete or run-on sentences in the body
+- Unprofessional or unclear phrasing that could confuse the recipient
+- Salutation or closing that is missing or clearly wrong
+- Wrong speaker name (different name in salutation vs. signatory block)
+
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkLetterOfInvitation(input: AgentInput): Promise<AgentOutput> {
@@ -103,6 +110,7 @@ ROUTING RULE:
 - VIP or Distinguished Speaker → process thru SLIFE (flag as major issue if submitted to APS)
 - Non-Distinguished Speaker → can process thru APS
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkCredentials(input: AgentInput): Promise<AgentOutput> {
@@ -128,6 +136,7 @@ CHECK:
 - Flag if VRT is missing when it should be required
 - Note: VRT does not need to be fully approved — pending status is acceptable
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkVenueReservation(input: AgentInput): Promise<AgentOutput> {
@@ -145,6 +154,7 @@ RULES:
 - Signatories must be COMPLETE (all required positions must have signed)
 - Required for all activities that include meetings
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkMeetingAgenda(input: AgentInput): Promise<AgentOutput> {
@@ -162,6 +172,7 @@ RULES:
 - Section VI is OPTIONAL (depends on the activity)
 - Required for all activities that include recruitment or auditions
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkRecruitmentMechanics(input: AgentInput): Promise<AgentOutput> {
@@ -178,6 +189,7 @@ RULES:
 - Must be placed RIGHT AFTER the Recruitment Mechanics in the pre-acts package
 - Verify the list contains actual interview/application questions
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkListOfQuestions(input: AgentInput): Promise<AgentOutput> {
@@ -195,6 +207,7 @@ RULES:
 - Section VI (Miting de Avance section) can be OMITTED if NO Miting de Avance will be conducted
 - Required for all activities that include elections
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkElectionMechanics(input: AgentInput): Promise<AgentOutput> {
@@ -212,6 +225,7 @@ RULES:
 - Position listed under Affiliation must NOT be "Project Head"
 - If prizes come from X-deals (sponsors, in-kind), a note must appear below the prize table
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkGeneralContestMechanics(input: AgentInput): Promise<AgentOutput> {
@@ -230,6 +244,7 @@ RULES (same as General Contest Mechanics PLUS):
 - If prizes are X-deals: note must be below the table
 - ADDITIONAL REQUIREMENT: Signatory of the Department Chair is REQUIRED
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkAcademicContestMechanics(input: AgentInput): Promise<AgentOutput> {
@@ -248,6 +263,7 @@ RULES:
 - The design/content should not contain any inappropriate content
 - Branding must represent the organization appropriately
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkSamplePub(input: AgentInput): Promise<AgentOutput> {
@@ -266,6 +282,7 @@ RULES:
 - Must be consistent with what is indicated in the PPR venue section
 - Google Forms: Screenshot must be attached in the pre-acts
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 export async function checkPreRegistrationForm(input: AgentInput): Promise<AgentOutput> {
