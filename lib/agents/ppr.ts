@@ -6,7 +6,7 @@
 
 import { callVisionModel } from "@/lib/openrouter";
 import type { AgentInput, AgentOutput } from "./types";
-import { ISSUE_SCHEMA } from "./types";
+import { ISSUE_SCHEMA, WRITING_CHECKS } from "./types";
 
 const SYSTEM_PROMPT = `You are an expert document checker for De La Salle University Manila's
 Council of Student Organizations (CSO). You are reviewing a Project Proposal Form (PPR).
@@ -26,10 +26,16 @@ SECTION I — Activity Details
 SECTION II — Brief Context
 - Must have EXACTLY 3 paragraphs (no more, no less)
 - Count visually: look for blank lines or clear indentation separating distinct prose blocks
+- Each paragraph must consist of complete, grammatically correct sentences
+- Flag any paragraph that contains placeholder text, a dangling incomplete thought, or an
+  obvious copy-paste artifact from a different document
 
 SECTION III — Objectives
 - Must have at LEAST 3 objectives
-- Each objective must be a COMPLETE SENTENCE (subject + verb + object); flag sentence fragments
+- Each objective must be a COMPLETE SENTENCE — it should state WHAT will be done AND
+  provide context/purpose (e.g., "To promote awareness among students by equipping them
+  with knowledge about X." is complete; "To promote awareness." is a fragment — flag it)
+- Objectives should use the "To [infinitive verb]..." format
 
 SECTION IV — Comprehensive Program Design (CPD)
 
@@ -42,6 +48,8 @@ SECTION IV — Comprehensive Program Design (CPD)
   5. Preparation of Post-acts
   6. Submission of Post-acts
 - Extra rows between required items (e.g. publicity posting) are acceptable
+- Brief Descriptions in each row must be a meaningful sentence or phrase — flag blank
+  or near-blank descriptions (e.g., a cell containing only "." or a single word)
 - Dates must NOT overlap between any two rows
 - Prep and Submission of Post-Acts must come AFTER the Activity Proper date
 - CSO ORGRES timing: day after activity proper (1 day) OR activity date + day after (2 days)
@@ -108,6 +116,7 @@ FLAG only these:
 PREPARED BY signatory: any org member is acceptable
 NOTED BY signatories: President and Faculty Adviser/Advisor are both standard — do NOT flag them
 
+${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
 
 const USER_PROMPT = `Please review all pages of this Project Proposal Form (PPR) carefully.
