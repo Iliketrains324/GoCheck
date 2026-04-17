@@ -51,13 +51,19 @@ export default function UploadPage() {
       prev.map((f) => (f.id === id ? { ...f, docType } : f))
     );
 
-    if (docType === "AFORM") {
+    // Both AFORM and PPR use the vision pipeline — render pages as images.
+    if (docType === "AFORM" || docType === "PPR") {
       const file = uploadedFiles.find((f) => f.id === id)?.file;
       if (file) {
         setUploadedFiles((prev) =>
           prev.map((f) => (f.id === id ? { ...f, rendering: true } : f))
         );
-        const pages = await renderPdfToImages(file);
+        const { renderPdfToImages } = await import("@/lib/pdf");
+        // PPR uses scale 1.5 for sharper small text; AFORM keeps 1.0 (form fields are large)
+        const pages = await renderPdfToImages(file, {
+          scale: docType === "PPR" ? 1.5 : 1.0,
+          maxPages: 10,
+        });
         setUploadedFiles((prev) =>
           prev.map((f) => (f.id === id ? { ...f, pages, rendering: false } : f))
         );
@@ -80,11 +86,11 @@ export default function UploadPage() {
     setError(null);
 
     try {
-      // Extract text from non-AFORM PDFs client-side
+      // AFORM and PPR use vision (pages already rendered); all others get text extraction.
       const { extractTextFromFile } = await import("@/lib/pdf");
       const filesPayload = await Promise.all(
         uploadedFiles.map(async (uf) => {
-          if (uf.docType === "AFORM") {
+          if (uf.docType === "AFORM" || uf.docType === "PPR") {
             return { docType: uf.docType, fileName: uf.file.name, pages: uf.pages };
           }
           const text = await extractTextFromFile(uf.file);
@@ -131,8 +137,8 @@ export default function UploadPage() {
             Upload Your Documents
           </h1>
           <p className="text-on-surface-variant leading-relaxed">
-            Upload PDF files and assign a document type to each one. For A-Forms, pages
-            will be rendered automatically for visual analysis.
+            Upload PDF files and assign a document type to each one. A-Forms and PPRs
+            are analyzed visually — pages render automatically when you select the type.
           </p>
         </div>
 
@@ -176,7 +182,7 @@ export default function UploadPage() {
                   </p>
                   <p className="text-xs text-on-surface-variant mt-0.5">
                     {(uf.file.size / 1024).toFixed(0)} KB
-                    {uf.docType === "AFORM" && uf.pages.length > 0 && (
+                    {(uf.docType === "AFORM" || uf.docType === "PPR") && uf.pages.length > 0 && (
                       <span className="ml-2 text-on-tertiary-container font-semibold">
                         · {uf.pages.length} pages rendered
                       </span>
@@ -258,31 +264,3 @@ export default function UploadPage() {
   );
 }
 
-// ─── Client-side PDF rendering for AFORM ─────────────────────────────────────
-
-async function renderPdfToImages(file: File): Promise<string[]> {
-  try {
-    const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
-    GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
-
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await getDocument({ data: arrayBuffer }).promise;
-    const pages: string[] = [];
-
-    for (let i = 1; i <= Math.min(pdf.numPages, 8); i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.0 });
-      const canvas = document.createElement("canvas");
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d")!;
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      pages.push(canvas.toDataURL("image/jpeg", 0.82));
-    }
-
-    return pages;
-  } catch (err) {
-    console.error("PDF render error:", err);
-    return [];
-  }
-}

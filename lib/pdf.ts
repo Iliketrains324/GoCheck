@@ -1,7 +1,9 @@
 /**
- * Client-side PDF text extraction using pdf.js.
- * Preserves paragraph breaks and table column structure using positional data.
+ * Client-side PDF utilities using pdf.js.
+ * extractTextFromFile: structured text for text-based agents (fallback only).
+ * renderPdfToImages: renders pages as JPEG base64 strings for vision agents.
  */
+
 export async function extractTextFromFile(file: File): Promise<string> {
   const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
   GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
@@ -84,4 +86,34 @@ export async function extractTextFromFile(file: File): Promise<string> {
   }
 
   return pageTexts.join("\n\n").trim();
+}
+
+/**
+ * Renders each PDF page to a base64 JPEG string for vision model input.
+ * @param scale  Render scale (default 1.5 — higher = sharper text, larger file)
+ * @param maxPages  Cap on pages rendered (default 10)
+ */
+export async function renderPdfToImages(
+  file: File,
+  { scale = 1.5, maxPages = 10 }: { scale?: number; maxPages?: number } = {}
+): Promise<string[]> {
+  const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
+  GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await getDocument({ data: arrayBuffer }).promise;
+  const pages: string[] = [];
+
+  for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d")!;
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    pages.push(canvas.toDataURL("image/jpeg", 0.82));
+  }
+
+  return pages;
 }
