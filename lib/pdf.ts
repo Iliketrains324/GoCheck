@@ -90,19 +90,22 @@ export async function extractTextFromFile(file: File): Promise<string> {
 
 /**
  * Renders each PDF page to a base64 JPEG string for vision model input.
- * @param scale  Render scale (default 1.5 — higher = sharper text, larger file)
- * @param maxPages  Cap on pages rendered (default 10)
+ * @param scale     Render scale (higher = sharper text, larger file)
+ * @param maxPages  Cap on pages rendered
+ * @param sections  If > 0, also append N horizontal strip crops per page after
+ *                  the full-page image. Strips overlap by 8% so no content is
+ *                  cut at boundaries. Used by AFORM to zoom in on checkbox areas.
  */
 export async function renderPdfToImages(
   file: File,
-  { scale = 1.5, maxPages = 10 }: { scale?: number; maxPages?: number } = {}
+  { scale = 1.5, maxPages = 10, sections = 0 }: { scale?: number; maxPages?: number; sections?: number } = {}
 ): Promise<string[]> {
   const { getDocument, GlobalWorkerOptions } = await import("pdfjs-dist");
   GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await getDocument({ data: arrayBuffer }).promise;
-  const pages: string[] = [];
+  const images: string[] = [];
 
   for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
     const page = await pdf.getPage(i);
@@ -112,8 +115,26 @@ export async function renderPdfToImages(
     canvas.height = viewport.height;
     const ctx = canvas.getContext("2d")!;
     await page.render({ canvasContext: ctx, viewport }).promise;
-    pages.push(canvas.toDataURL("image/jpeg", 0.92));
+
+    // Full page image
+    images.push(canvas.toDataURL("image/jpeg", 0.92));
+
+    // Horizontal strip crops (for dense checkbox forms like AFORM)
+    if (sections > 0) {
+      const overlapPx = Math.round(canvas.height * 0.08);
+      const stripH = Math.ceil(canvas.height / sections);
+
+      for (let s = 0; s < sections; s++) {
+        const srcY = Math.max(0, s * stripH - overlapPx);
+        const srcH = Math.min(canvas.height - srcY, stripH + overlapPx * 2);
+        const crop = document.createElement("canvas");
+        crop.width = canvas.width;
+        crop.height = srcH;
+        crop.getContext("2d")!.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+        images.push(crop.toDataURL("image/jpeg", 0.92));
+      }
+    }
   }
 
-  return pages;
+  return images;
 }

@@ -63,6 +63,7 @@ export default function UploadPage() {
         const pages = await renderPdfToImages(file, {
           scale: docType === "PPR" ? 1.5 : 2.0,
           maxPages: 10,
+          sections: docType === "AFORM" ? 3 : 0,
         });
         setUploadedFiles((prev) =>
           prev.map((f) => (f.id === id ? { ...f, pages, rendering: false } : f))
