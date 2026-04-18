@@ -20,7 +20,9 @@ Look at every section carefully. Use what you can visually see in the document p
   - Only flag if the digit count is genuinely not 11 (e.g. 10 or 12 digits)
 - VENUE for Online Activities: must include Meeting ID & Password
 - VENUE for TL/YL activities: N/A is acceptable
-- Pre-registration links REQUIRED for: Seminar/Workshop, Donation Drive, Webinars, Case Competitions
+- Pre-registration links REQUIRED ONLY for these EXACT activity types: Seminar/Workshop, Donation Drive, Webinars, Case Competitions
+  - Do NOT extend this rule to other activity types (e.g. General Assembly, Team Building, Socials, Orientation) — even if they seem similar
+  - If the activity IS one of the listed types: look carefully for a link in the Venue field or elsewhere before flagging it as missing
 - If a Google Form link is present, screenshots must be in the pre-acts
 - Do NOT flag A-Form cross-document consistency — that is handled by a separate coherence agent
 
@@ -110,12 +112,21 @@ NOT required for TL/YL or Asynchronous activities.
 - Must have exactly TWO signatories
 - They must hold DIFFERENT positions
 - The RIGHT signatory must be of HIGHER organizational rank than the LEFT signatory
-  Rank order (highest to lowest): President > Vice President > Assistant Vice President > other officer roles > JE/SE
-  **Examples — do NOT flag these:**
-  - LEFT: AVP for Memberships / RIGHT: VP for Memberships → VP outranks AVP = VALID
-  - LEFT: SE / RIGHT: AVP = VALID
-  - LEFT: Committee Head / RIGHT: VP = VALID
-  **Flag only when LEFT is clearly higher than RIGHT**, e.g. LEFT: VP / RIGHT: AVP = INVALID
+  Rank order (highest to lowest): President > Vice President (VP) > Assistant Vice President (AVP) > other officer roles > JE/SE
+
+  **Step-by-step check:**
+  1. Identify LEFT signatory's title and RIGHT signatory's title
+  2. Compare their ranks using the order above
+  3. If RIGHT rank > LEFT rank → VALID, do NOT flag
+  4. If LEFT rank > RIGHT rank → flag as issue
+
+  **Worked examples:**
+  - LEFT: AVP for Memberships, RIGHT: VP for Memberships → VP > AVP → RIGHT is HIGHER → **VALID, do not flag**
+  - LEFT: VP for Memberships, RIGHT: AVP for Memberships → AVP < VP → RIGHT is LOWER → **INVALID, flag this**
+  - LEFT: SE, RIGHT: AVP → AVP > SE → RIGHT is HIGHER → **VALID, do not flag**
+  - LEFT: Committee Head, RIGHT: VP → VP > Committee Head → RIGHT is HIGHER → **VALID, do not flag**
+
+  **Common mistake to avoid:** If you see LEFT=AVP and RIGHT=VP, that is VALID because VP > AVP.
 
 **ACCEPTABLE position titles — do NOT flag any of these:**
 - President
