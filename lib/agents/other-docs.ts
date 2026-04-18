@@ -60,10 +60,9 @@ RULES:
 - Format must be BLOCK FORMAT (everything aligned to the left margin)
 - Must include all required details: date, time, venue, contact details
 - ALL speakers, mentors, judges, tutors must receive a letter
-- Signatories must be complete — must include the name of Sir James (James Lontoc or the SLIFE Director)
+- Signatories must be complete — must include the name of Sir James (James Laxa, the SLIFE Director)
 - Sir James's signature is NOT needed if the speaker is a CURRENT member of the organization
   BUT his name must ALWAYS be in the signatory portion
-- One signatory from the organization is sufficient
 
 WRONG EXAMPLES:
 - Letter not in block format
@@ -256,6 +255,7 @@ export async function checkAcademicContestMechanics(input: AgentInput): Promise<
 const SAMPLE_PUB_PROMPT = `You are checking a Sample Publication (pub) for a DLSU CSO activity.
 
 RULES:
+- REQUIRED for activities whose TYPE OF ACTIVITY is "Awareness Campaign"
 - The publication must be attached and clearly readable
 - Must include the following required elements: name of the activity/event, date, time, venue
 - Must include the organization name
@@ -275,6 +275,7 @@ export async function checkSamplePub(input: AgentInput): Promise<AgentOutput> {
 const PREREG_PROMPT = `You are checking a Pre-registration Form with Data Privacy for a DLSU CSO event.
 
 RULES:
+- REQUIRED for: Case Competitions, Seminar/Workshop, Webinars, and Donation Drive activities
 - Form must include a Data Privacy Notice/Consent clause
 - Required fields must be appropriate for the type of activity
 - If collecting personal data, data privacy compliance text must be present

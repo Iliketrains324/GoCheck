@@ -53,6 +53,8 @@ SECTION IV — Comprehensive Program Design (CPD)
 - Dates must NOT overlap between any two rows
 - Prep and Submission of Post-Acts must come AFTER the Activity Proper date
 - CSO ORGRES timing: day after activity proper (1 day) OR activity date + day after (2 days)
+- "Termlong" or "Yearlong" may ONLY appear in the Duration column for the Activity Proper row;
+  flag if TL/YL appears in any other row's duration
 
 2ND CPD TABLE (Activity Proper timeline) — NOT required for TL/YL or Asynchronous activities:
 - F2F events must include: Preparation Time, Registration Time, and Cleanup Time
@@ -64,6 +66,9 @@ SECTION IV — Comprehensive Program Design (CPD)
 - Speaker entries must follow format: "Speaker: [Full Name]"
   (entries like "Speaker Talking Segment: [Name]" do NOT follow the required format — flag them)
 - Icebreaker entries must follow format: "Icebreaker: [Name]"
+- When a speaker row is present, the speaker's name must also appear in the Brief Description
+  cell for that row (e.g., a brief note about what they will discuss)
+- For multiple-dated activities, a separate 2nd CPD table must be included for each date
 
 SECTION V — Breakdown of Expenses
 - ALL projected expenses must be listed
@@ -71,6 +76,7 @@ SECTION V — Breakdown of Expenses
 - Venue fee required if event is >2 hours (medium venues) or the venue is large
 - If no expenses: all boxes must say N/A
 - Total must be ≤ Php 20,000 (if total >20,000: must process through SLIFE — flag as major)
+- Total must also be ≤ the Declared Activity Budget in GOSM (flag if it visibly exceeds it)
 - All monetary values: "Php" or "PHP" prefix (either casing is acceptable) and must end with .00
 - Unit Cost = actual cost PER individual item (not the total row cost)
 
@@ -79,7 +85,8 @@ SECTION VI — Allocation of Expenses
 - Organizational Funds amount must equal Section V total
 - Participants' Fee: ALWAYS N/A for APS processing
 - Others (Sponsorships etc.): ALWAYS N/A for APS processing
-- If NO expenses: replace table with the required statement about no expenses
+- If NO expenses: the table must be replaced by the exact statement:
+  "THE ACTIVITY WILL NOT INCUR ANY EXPENSES; THUS, IT WILL NOT NEED FUNDING."
 
 SECTION VII — Projected Income
 - If there is projected income: must process through SLIFE (flag as major)
@@ -92,6 +99,8 @@ SECTION VIII — Summary of Funds
 - Participants Fee / Donation / Sponsorship: must match Section VII, or N/A
 - Total Projected Expenses must match Section V total (compare numerically)
 - All monetary values: Php or PHP prefix with .00 ending
+- The VP Finance signatory slot may ONLY be signed by: the VP Finance, an officially
+  recognized OIC, or the President — flag any other person signing for VP Finance
 
 SECTION IX — Provisions for Profit and Loss / Signatories
 
@@ -115,6 +124,14 @@ FLAG only these:
 
 PREPARED BY signatory: any org member is acceptable
 NOTED BY signatories: President and Faculty Adviser/Advisor are both standard — do NOT flag them
+
+SIGNING FOR SOMEONE ELSE: If a person is signing on behalf of another signatory,
+they must write their own name and position next to the supposed signatory's slot.
+Flag if someone has signed but no proxy name/position annotation is visible.
+
+FA SIGNATURE: The Faculty Adviser's signature may not be needed if a Blanket of Approval
+has been provided — but the FA name must still appear in the signatory block even without
+a signature. Flag if the FA name is entirely absent.
 
 ${WRITING_CHECKS}
 ${ISSUE_SCHEMA}`;
