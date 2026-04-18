@@ -10,7 +10,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Basic allow-list to prevent arbitrary model abuse
 const ALLOWED_MODELS = new Set([
-  "qwen/qwen2.5-vl-72b-instruct",
+  "google/gemini-2.5-flash-preview",
   "deepseek/deepseek-chat",
 ]);
 
