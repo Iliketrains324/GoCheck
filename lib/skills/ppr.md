@@ -14,10 +14,12 @@ Look at every section carefully. Use what you can visually see in the document p
 
 ## SECTION I — Activity Details
 - Number of Project Heads = Number of Contact Numbers = Number of DLSU Emails (must be equal)
-- Contact numbers must have EXACTLY 11 digits — spaces and hyphens are formatting only, count ONLY the digit characters
-  - "0927 831 0777" → 0927831 0777 → 11 digits = VALID
+- Contact numbers must have EXACTLY 11 digits — that is the ONLY check
+  - Strip all spaces and hyphens, then count digits only
   - "0960 236 1863" → 09602361863 → 11 digits = VALID
+  - "0977 676 2636" → 09776762636 → 11 digits = VALID
   - Only flag if the digit count is genuinely not 11 (e.g. 10 or 12 digits)
+  - Do NOT flag spacing style, hyphenation, or formatting pattern (4-3-4, 4-7, etc.) — formatting is irrelevant, only digit count matters
 - VENUE for Online Activities: must include Meeting ID & Password
 - VENUE for TL/YL activities: N/A is acceptable
 - Pre-registration links REQUIRED ONLY for these EXACT activity types: Seminar/Workshop, Donation Drive, Webinars, Case Competitions
