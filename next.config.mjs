@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Ensure skill markdown files are bundled in Vercel serverless output
+  outputFileTracingIncludes: {
+    "/api/**": ["./lib/skills/**/*.md"],
+  },
   // pdf-parse was removed; pdfjs-dist handles extraction client-side
   async headers() {
     return [
