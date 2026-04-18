@@ -1,10 +1,12 @@
 import type { AgentOutput, DocType } from "./types";
 
-const NO_FIX_PATTERNS = /^(none|n\/a|no fix|no fix needed|no action|no change|no correction|nothing)\.?$/i;
+const NO_FIX_EXACT = /^(none|n\/a|no fix( needed| required)?|no action( needed| required)?|no change( needed| required)?|no correction( needed| required)?|nothing( needed| required)?)[\s.,;!]*$/i;
+const NO_FIX_PREFIX = /^fix:\s*(none|n\/a|no fix|no action|no change|no correction|nothing)/i;
 
 function isActionable(suggestion: unknown): boolean {
   if (!suggestion || typeof suggestion !== "string") return false;
-  return !NO_FIX_PATTERNS.test(suggestion.trim());
+  const t = suggestion.trim();
+  return !NO_FIX_EXACT.test(t) && !NO_FIX_PREFIX.test(t);
 }
 
 /**
