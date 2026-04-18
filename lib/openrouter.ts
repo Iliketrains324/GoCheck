@@ -1,5 +1,5 @@
 // Vision model for AFORM (PDF pages as images)
-export const VISION_MODEL = "qwen/qwen2.5-vl-72b-instruct";
+export const VISION_MODEL = "google/gemini-2.5-flash-preview";
 // Text model for all non-AFORM documents
 export const TEXT_MODEL = "deepseek/deepseek-chat";
 // Coherence checker
