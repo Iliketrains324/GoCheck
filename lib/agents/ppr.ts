@@ -1,6 +1,7 @@
 import { callVisionModel } from "@/lib/openrouter";
 import type { AgentInput, AgentOutput } from "./types";
 import { loadSkill } from "@/lib/skills/load";
+import { parseAgentOutput } from "./parse";
 
 const SYSTEM_PROMPT = loadSkill("ppr");
 
@@ -22,41 +23,13 @@ export async function checkPpr(input: AgentInput): Promise<AgentOutput> {
 
   try {
     const raw = await callVisionModel(SYSTEM_PROMPT, USER_PROMPT, pages, input.onToken);
-    return parseAgentResponse(raw);
+    return parseAgentOutput(raw, "PPR");
   } catch (err) {
     return {
       docType: "PPR",
       status: "error",
       issues: [],
       summary: `Error during PPR check: ${(err as Error).message}`,
-    };
-  }
-}
-
-function parseAgentResponse(raw: string): AgentOutput {
-  try {
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error("No JSON found");
-    const parsed = JSON.parse(match[0]);
-    return {
-      docType: "PPR",
-      status: parsed.status ?? "ok",
-      issues: parsed.issues ?? [],
-      summary: parsed.summary ?? "Check complete.",
-    };
-  } catch {
-    return {
-      docType: "PPR",
-      status: "has_issues",
-      issues: [
-        {
-          field: "Parse Error",
-          problem: "Could not parse AI response",
-          suggestion: "Please re-run the check.",
-          severity: "minor",
-        },
-      ],
-      summary: "Unable to parse check results. Raw: " + raw.slice(0, 200),
     };
   }
 }
