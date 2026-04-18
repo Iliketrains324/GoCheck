@@ -15,8 +15,9 @@ const ALLOWED_MODELS = new Set([
 ]);
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
+  const body = await req.json().catch((e) => { console.error("[ai-proxy] body parse failed:", e); return null; });
   if (!body || !body.model || !body.messages) {
+    console.error("[ai-proxy] invalid request body — model:", body?.model, "messages:", !!body?.messages);
     return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 });
   }
   if (!ALLOWED_MODELS.has(body.model)) {
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
 
   if (!upstream.ok) {
     const err = await upstream.text();
+    console.error(`[ai-proxy] OpenRouter ${upstream.status} for model ${body.model}:`, err);
     return new Response(JSON.stringify({ error: err }), { status: upstream.status });
   }
 
