@@ -2,6 +2,7 @@ import { callModel, REASONING_MODEL } from "@/lib/openrouter";
 import type { AgentInput, AgentOutput } from "./types";
 import type { DocResult } from "@/lib/supabase";
 import { loadSkill } from "@/lib/skills/load";
+import { parseAgentOutput } from "./parse";
 
 const SYSTEM_PROMPT = loadSkill("coherence");
 
@@ -32,7 +33,11 @@ ${docSummaries}`,
 
   try {
     const raw = await callModel(messages, REASONING_MODEL, { maxTokens: 4096, onToken: input.onToken });
-    return parseCoherenceResponse(raw);
+    const result = parseAgentOutput(raw, "AFORM");
+    return {
+      ...result,
+      issues: result.issues.map((i) => ({ ...i, field: `[Cross-doc] ${i.field}` })),
+    };
   } catch (err) {
     return {
       docType: "AFORM",
@@ -61,26 +66,3 @@ ${result.rawText ? `\nExtracted Text (excerpt):\n${result.rawText.slice(0, 1500)
     .join("\n\n");
 }
 
-function parseCoherenceResponse(raw: string): AgentOutput {
-  try {
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON found");
-    const parsed = JSON.parse(jsonMatch[0]);
-    return {
-      docType: "AFORM",
-      status: parsed.status ?? "ok",
-      issues: (parsed.issues ?? []).map((i: AgentOutput["issues"][0]) => ({
-        ...i,
-        field: `[Cross-doc] ${i.field}`,
-      })),
-      summary: parsed.summary ?? "Coherence check complete.",
-    };
-  } catch {
-    return {
-      docType: "AFORM",
-      status: "ok",
-      issues: [],
-      summary: "Coherence check completed.",
-    };
-  }
-}

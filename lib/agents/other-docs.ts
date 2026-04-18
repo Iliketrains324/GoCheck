@@ -1,27 +1,8 @@
 import { callModel, TEXT_MODEL } from "@/lib/openrouter";
 import type { AgentInput, AgentOutput, DocType } from "./types";
 import { loadSkill } from "@/lib/skills/load";
+import { parseAgentOutput } from "./parse";
 
-function parseAgentResponse(raw: string, docType: DocType): AgentOutput {
-  try {
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON found");
-    const parsed = JSON.parse(jsonMatch[0]);
-    return {
-      docType,
-      status: parsed.status ?? "ok",
-      issues: parsed.issues ?? [],
-      summary: parsed.summary ?? "Check complete.",
-    };
-  } catch {
-    return {
-      docType,
-      status: "has_issues",
-      issues: [{ field: "Parse Error", problem: "Could not parse response", suggestion: "Re-run check.", severity: "minor" }],
-      summary: "Unable to parse results.",
-    };
-  }
-}
 
 async function runTextCheck(
   docType: DocType,
@@ -42,7 +23,7 @@ async function runTextCheck(
       TEXT_MODEL,
       { onToken }
     );
-    return parseAgentResponse(raw, docType);
+    return parseAgentOutput(raw, docType);
   } catch (err) {
     return { docType, status: "error", issues: [], summary: `Error: ${(err as Error).message}` };
   }
