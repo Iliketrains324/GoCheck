@@ -52,6 +52,7 @@ FIELD 9 — Online Activity and Activity in GOSM
 - F2F activity: must check "NO" for Online Activity
 - Online synchronous: check "YES"
 - Online asynchronous / pub posting: check "YES"
+- E-games, Netflix Party, Simultaneous Streaming: check "YES"
 - Activity in GOSM: ALWAYS check "Yes" (unless SAS provided)
 
 FIELD 10 — Reach of Activity
