@@ -59,11 +59,11 @@ export default function UploadPage() {
           prev.map((f) => (f.id === id ? { ...f, rendering: true } : f))
         );
         const { renderPdfToImages } = await import("@/lib/pdf");
-        // Both AFORM and PPR use scale 2.0; AFORM gets 3 strips, PPR gets 2 strips
+        // Both AFORM and PPR use scale 2.0; AFORM gets 3 strips, PPR gets none
         const pages = await renderPdfToImages(file, {
           scale: 2.0,
           maxPages: 10,
-          sections: docType === "AFORM" ? 3 : 2,
+          sections: docType === "AFORM" ? 3 : 0,
         });
         setUploadedFiles((prev) =>
           prev.map((f) => (f.id === id ? { ...f, pages, rendering: false } : f))
