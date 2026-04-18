@@ -60,7 +60,7 @@ RULES:
 - Format must be BLOCK FORMAT (everything aligned to the left margin)
 - Must include all required details: date, time, venue, contact details
 - ALL speakers, mentors, judges, tutors must receive a letter
-- Signatories must be complete — must include the name of Sir James (James Lontoc or the SLIFE Director)
+- Signatories must be complete — must include the name of Sir James (James Laxa, the SLIFE Director)
 - Sir James's signature is NOT needed if the speaker is a CURRENT member of the organization
   BUT his name must ALWAYS be in the signatory portion
 
