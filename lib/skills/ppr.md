@@ -111,22 +111,12 @@ NOT required for TL/YL or Asynchronous activities.
 ### Provisions for Profit and Loss (the two main signatories)
 - Must have exactly TWO signatories
 - They must hold DIFFERENT positions
-- The RIGHT signatory must be of HIGHER organizational rank than the LEFT signatory
-  Rank order (highest to lowest): President > Vice President (VP) > Assistant Vice President (AVP) > other officer roles > JE/SE
-
-  **Step-by-step check:**
-  1. Identify LEFT signatory's title and RIGHT signatory's title
-  2. Compare their ranks using the order above
-  3. If RIGHT rank > LEFT rank → VALID, do NOT flag
-  4. If LEFT rank > RIGHT rank → flag as issue
-
-  **Worked examples:**
-  - LEFT: AVP for Memberships, RIGHT: VP for Memberships → VP > AVP → RIGHT is HIGHER → **VALID, do not flag**
-  - LEFT: VP for Memberships, RIGHT: AVP for Memberships → AVP < VP → RIGHT is LOWER → **INVALID, flag this**
-  - LEFT: SE, RIGHT: AVP → AVP > SE → RIGHT is HIGHER → **VALID, do not flag**
-  - LEFT: Committee Head, RIGHT: VP → VP > Committee Head → RIGHT is HIGHER → **VALID, do not flag**
-
-  **Common mistake to avoid:** If you see LEFT=AVP and RIGHT=VP, that is VALID because VP > AVP.
+- **ONLY FLAG** this section if the LEFT signatory has a HIGHER rank than the RIGHT signatory. The normal correct arrangement is lower rank on the left, higher rank on the right.
+  - Rank order low→high: JE/SE < other officer roles < AVP < VP < President
+  - **FLAG** (left outranks right): LEFT=VP + RIGHT=AVP, LEFT=President + RIGHT=VP
+  - **DO NOT FLAG** (right outranks left — this is correct): LEFT=AVP + RIGHT=VP, LEFT=SE + RIGHT=AVP
+  - **DO NOT FLAG** (equal rank is also acceptable)
+  - The arrangement LEFT=AVP + RIGHT=VP is the **expected, correct configuration** — do not flag it under any circumstances.
 
 **ACCEPTABLE position titles — do NOT flag any of these:**
 - President
