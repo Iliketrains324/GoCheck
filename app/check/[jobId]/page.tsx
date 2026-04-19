@@ -22,14 +22,8 @@ import {
   checkPreRegistrationForm,
 } from "@/lib/agents/other-docs";
 import type { AgentInput, AgentOutput } from "@/lib/agents/types";
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Waiting...",
-  uploading: "Uploading files...",
-  processing: "Checking documents...",
-  completed: "All done!",
-  failed: "Failed",
-};
+import { Logo, StepCrumbs } from "@/app/components/logo";
+import { Check, ChevronDown, ChevronUp } from "@/app/components/icons";
 
 const AGENT_MAP: Partial<Record<DocType, (input: AgentInput) => Promise<AgentOutput>>> = {
   AFORM: checkAform,
@@ -47,7 +41,6 @@ const AGENT_MAP: Partial<Record<DocType, (input: AgentInput) => Promise<AgentOut
   PRE_REGISTRATION_FORM: checkPreRegistrationForm,
 };
 
-/** Fire-and-forget PATCH to keep DB in sync. Errors are non-fatal. */
 async function patchJob(jobId: string, update: Record<string, unknown>) {
   await fetch(`/api/jobs/${jobId}`, {
     method: "PATCH",
@@ -56,11 +49,99 @@ async function patchJob(jobId: string, update: Record<string, unknown>) {
   }).catch((err) => console.error("[patchJob]", err));
 }
 
+function CheckRow({
+  label,
+  file,
+  status,
+  isLast,
+  accent,
+}: {
+  label: string;
+  file: string;
+  status: "done" | "running" | "queued";
+  isLast: boolean;
+  accent?: boolean;
+}) {
+  const colors = {
+    done:    { mark: "var(--accent)",    text: "var(--ink)",      note: "Done" },
+    running: { mark: "var(--ink)",       text: "var(--ink)",      note: "Checking…" },
+    queued:  { mark: "var(--ink-mute)", text: "var(--ink-mute)", note: "Queued" },
+  }[status];
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "28px 1fr auto",
+        gap: 16, alignItems: "center",
+        padding: "18px 22px",
+        borderBottom: isLast ? "none" : "1px solid var(--hairline)",
+        background: accent && status === "running" ? "var(--container-low)" : "transparent",
+      }}
+    >
+      <span style={{ display: "inline-flex", justifyContent: "center" }}>
+        {status === "done" && <Check size={16} stroke={2.4} style={{ color: colors.mark }} />}
+        {status === "running" && (
+          <span
+            style={{
+              width: 14, height: 14, borderRadius: "50%",
+              border: "1.5px solid var(--ink)",
+              borderTopColor: "transparent",
+              animation: "spin 0.9s linear infinite",
+              display: "inline-block",
+            }}
+          />
+        )}
+        {status === "queued" && (
+          <span
+            style={{
+              width: 7, height: 7, borderRadius: "50%",
+              background: "var(--hairline-strong)",
+              display: "inline-block",
+            }}
+          />
+        )}
+      </span>
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontWeight: 500, fontSize: 14.5,
+            color: colors.text, letterSpacing: "-0.005em",
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 12.5, color: "var(--ink-mute)",
+            marginTop: 2, overflow: "hidden",
+            textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}
+        >
+          {file}
+        </div>
+      </div>
+      <span
+        style={{
+          fontFamily: "ui-monospace, Menlo, monospace",
+          fontSize: 11, color: colors.mark,
+          textTransform: "lowercase", letterSpacing: "0.02em",
+        }}
+      >
+        {colors.note}
+      </span>
+    </div>
+  );
+}
+
 export default function CheckPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLog, setShowLog] = useState(false);
   const processingStarted = useRef(false);
   const [streamContent, setStreamContent] = useState("");
   const [streamDocLabel, setStreamDocLabel] = useState("");
@@ -108,19 +189,42 @@ export default function CheckPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <span className="material-symbols-outlined text-primary animate-spin text-5xl">progress_activity</span>
+      <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span
+          style={{
+            width: 32, height: 32, borderRadius: "50%",
+            border: "2px solid var(--accent)", borderTopColor: "transparent",
+            animation: "spin 0.8s linear infinite",
+            display: "inline-block",
+          }}
+        />
       </div>
     );
   }
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="bg-surface-container-lowest rounded-xl p-8 text-center max-w-sm">
-          <span className="material-symbols-outlined text-error text-5xl mb-3 block">error</span>
-          <p className="font-headline font-semibold text-primary">Job not found</p>
-          <Link href="/upload" className="btn-primary mt-6 inline-flex">Start Over</Link>
+      <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            border: "1px solid var(--hairline)", borderRadius: 14,
+            padding: "36px 40px", textAlign: "center", maxWidth: 360,
+          }}
+        >
+          <p style={{ fontFamily: "Manrope, system-ui, sans-serif", fontWeight: 600, fontSize: 18, color: "var(--ink)", marginBottom: 16 }}>
+            Job not found
+          </p>
+          <Link
+            href="/upload"
+            style={{
+              background: "var(--ink)", color: "var(--paper)",
+              padding: "12px 20px", borderRadius: 999,
+              fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, fontSize: 14,
+              textDecoration: "none", display: "inline-flex", alignItems: "center",
+            }}
+          >
+            Start over
+          </Link>
         </div>
       </div>
     );
@@ -131,349 +235,211 @@ export default function CheckPage() {
   const files = job.files ?? [];
   const docStatuses = new Map(progress.map((p) => [p.docType, p]));
   const doneCount = progress.filter((p) => p.status === "done").length;
-  const progressPct = Math.max(10, (doneCount / Math.max(files.length, 1)) * 100);
+  const hasCoherence = files.length > 1;
+  const totalSteps = files.length + (hasCoherence ? 1 : 0);
+  const progressPct = Math.max(6, (doneCount / Math.max(totalSteps, 1)) * 100);
+  const complete = jobStatus === "completed";
 
   return (
-    <div className="bg-surface font-body text-on-surface flex h-screen overflow-hidden">
-      {/* Slim sidebar */}
-      <aside className="bg-slate-50 h-screen w-16 flex flex-col items-center py-6 space-y-8 sticky left-0 top-0 z-50 flex-shrink-0">
-        <Link href="/" className="font-black text-primary text-xl tracking-tighter font-headline">G</Link>
-        <nav className="flex flex-col space-y-4 flex-grow">
-          <span className="text-primary bg-primary/10 rounded-lg p-2.5">
-            <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>
-          </span>
-          <span className="text-on-surface-variant/40 p-2.5">
-            <span className="material-symbols-outlined text-xl">folder_open</span>
-          </span>
-        </nav>
-      </aside>
-
-      {/* Main */}
-      <main className="flex-grow flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="bg-slate-50/80 glass-nav flex justify-between items-center w-full px-8 py-4 flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-on-surface-variant hover:text-primary transition-all">
-              <span className="material-symbols-outlined">arrow_back</span>
+    <div style={{ background: "var(--paper)", minHeight: "100vh", color: "var(--ink)" }}>
+      {/* Nav */}
+      <header
+        style={{
+          position: "sticky", top: 0, zIndex: 40,
+          background: "rgba(250,250,248,0.88)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          borderBottom: "1px solid var(--hairline)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200, margin: "0 auto",
+            padding: "18px 36px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <Link href="/" style={{ textDecoration: "none" }}>
+              <Logo />
             </Link>
-            <div>
-              <h1 className="text-lg font-black tracking-tighter text-primary font-headline">
-                GoCheck Audit Suite
-              </h1>
-              <p className="text-xs font-medium text-on-surface-variant uppercase tracking-widest">
-                {STATUS_LABELS[jobStatus] ?? jobStatus}
-              </p>
-            </div>
+            <StepCrumbs step={2} />
           </div>
-          <div className="flex items-center gap-3">
-            {jobStatus !== "completed" && jobStatus !== "failed" && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-tertiary-container/10 rounded-full">
-                <span className="flex h-2 w-2 rounded-full bg-on-tertiary-container animate-pulse" />
-                <span className="text-xs font-semibold text-on-tertiary-container">Analysis Live</span>
-              </div>
+          {/* Live / Finished pill */}
+          <span
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "4px 10px", borderRadius: 999,
+              background: complete ? "var(--accent-soft)" : "var(--accent-soft)",
+              color: "var(--accent-ink)",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontWeight: 600, fontSize: 11.5,
+              letterSpacing: "-0.005em",
+            }}
+          >
+            <span
+              style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: "var(--accent)",
+                animation: complete ? "none" : "pulse-dot 1.4s ease-in-out infinite",
+                display: "inline-block",
+              }}
+            />
+            {complete ? "Finished" : "Live"}
+          </span>
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 880, margin: "0 auto", padding: "56px 36px 80px" }}>
+        {/* Heading */}
+        <div
+          style={{
+            display: "flex", alignItems: "flex-start",
+            justifyContent: "space-between", gap: 24, marginBottom: 36,
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                fontFamily: "Manrope, system-ui, sans-serif",
+                fontWeight: 700, fontSize: 40,
+                letterSpacing: "-0.03em", lineHeight: 1.05,
+                color: "var(--ink)", margin: 0, marginBottom: 10,
+              }}
+            >
+              {complete ? "Audit complete." : "Auditing your documents…"}
+            </h1>
+            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 15, color: "var(--ink-mute)", margin: 0 }}>
+              {complete
+                ? "Taking you to results."
+                : `${doneCount} of ${totalSteps} checks complete · safe to refresh`}
+            </p>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div
+          style={{
+            height: 3, background: "var(--container)",
+            borderRadius: 999, overflow: "hidden", marginBottom: 40,
+          }}
+        >
+          <div
+            style={{
+              height: "100%", width: `${progressPct}%`,
+              background: "var(--accent)",
+              transition: "width 600ms cubic-bezier(.2,.8,.2,1)",
+            }}
+          />
+        </div>
+
+        {/* Check ledger */}
+        <div
+          style={{
+            border: "1px solid var(--hairline)",
+            borderRadius: 12, background: "var(--paper)",
+            overflow: "hidden", marginBottom: 24,
+          }}
+        >
+          {files.map((file, i) => {
+            const prog = docStatuses.get(file.docType);
+            const ds = prog?.status ?? "pending";
+            const isLastFile = !hasCoherence && i === files.length - 1;
+            return (
+              <CheckRow
+                key={file.docType}
+                label={DOC_TYPE_LABELS[file.docType as DocType] ?? file.docType}
+                file={file.fileName}
+                status={ds === "done" ? "done" : ds === "processing" ? "running" : "queued"}
+                isLast={isLastFile}
+              />
+            );
+          })}
+          {hasCoherence && (
+            <CheckRow
+              label="Cross-document coherence"
+              file="Verifies dates, venue, and titles match"
+              status={
+                docStatuses.get("COHERENCE" as DocType)?.status === "done"
+                  ? "done"
+                  : complete
+                  ? "done"
+                  : doneCount >= files.length
+                  ? "running"
+                  : "queued"
+              }
+              isLast
+              accent
+            />
+          )}
+        </div>
+
+        {/* Log toggle */}
+        <div>
+          <button
+            onClick={() => setShowLog((s) => !s)}
+            style={{
+              background: "transparent", border: "none",
+              display: "inline-flex", alignItems: "center", gap: 6,
+              color: "var(--ink-mute)",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 13, fontWeight: 500,
+              cursor: "pointer", padding: "6px 0",
+            }}
+          >
+            {showLog ? <ChevronUp size={14} stroke={2} /> : <ChevronDown size={14} stroke={2} />}
+            {showLog ? "Hide" : "Show"} live agent output
+            {streamDocLabel && !showLog && (
+              <span style={{ color: "var(--accent-ink)", fontSize: 12, marginLeft: 4 }}>
+                · {streamDocLabel}
+              </span>
             )}
-            {jobStatus === "completed" && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-tertiary-fixed rounded-full">
-                <span className="material-symbols-outlined text-on-tertiary-fixed text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                <span className="text-xs font-bold text-on-tertiary-fixed">Complete</span>
-              </div>
-            )}
-          </div>
-        </header>
+          </button>
 
-        {/* Split view */}
-        <section className="flex-grow flex overflow-hidden">
-          {/* Left: document list */}
-          <div className="w-7/12 bg-surface-container-low p-8 overflow-y-auto no-scrollbar">
-            <div className="max-w-2xl mx-auto space-y-6">
-              {/* Overall progress */}
-              <div className="bg-surface-container-lowest rounded-xl p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div
-                    className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0
-                      ${jobStatus === "completed" ? "bg-tertiary-fixed" : jobStatus === "failed" ? "bg-error-container" : "bg-surface-container"}`}
-                  >
-                    {jobStatus === "completed" ? (
-                      <span className="material-symbols-outlined text-on-tertiary-fixed text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    ) : jobStatus === "failed" ? (
-                      <span className="material-symbols-outlined text-error text-2xl">error</span>
-                    ) : (
-                      <span className="material-symbols-outlined text-primary text-2xl animate-spin">progress_activity</span>
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-primary font-headline tracking-tighter">
-                      {STATUS_LABELS[jobStatus] ?? jobStatus}
-                    </h2>
-                    <p className="text-on-surface-variant text-sm">
-                      {jobStatus === "completed"
-                        ? "Redirecting to results..."
-                        : jobStatus === "failed"
-                        ? job.error ?? "An error occurred."
-                        : `Analyzing ${files.length} document${files.length > 1 ? "s" : ""}...`}
-                    </p>
-                  </div>
-                </div>
-                {jobStatus !== "completed" && jobStatus !== "failed" && (
-                  <div className="bg-surface-container rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="h-full bg-on-tertiary-container transition-all duration-500 animate-pulse-bar rounded-full"
-                      style={{ width: `${progressPct}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Document rows */}
-              <div className="space-y-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Documents</p>
-                {files.map((file) => {
-                  const prog = docStatuses.get(file.docType);
-                  const docStatus = prog?.status ?? "pending";
-                  return (
-                    <div key={file.docType} className="bg-surface-container-lowest rounded-xl p-5 flex items-center gap-4">
-                      <div className="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-on-surface-variant text-base">description</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-headline font-semibold text-primary text-sm">
-                          {DOC_TYPE_LABELS[file.docType as DocType] ?? file.docType}
-                        </p>
-                        <p className="text-xs text-on-surface-variant truncate">{file.fileName}</p>
-                        {prog?.message && (
-                          <p className="text-xs text-on-surface-variant mt-0.5 truncate">{prog.message}</p>
-                        )}
-                      </div>
-                      <div className="flex-shrink-0">
-                        {docStatus === "done" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold">
-                            <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>check</span> Done
-                          </span>
-                        ) : docStatus === "error" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-on-error-container text-xs font-bold">
-                            Error
-                          </span>
-                        ) : docStatus === "processing" ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-fixed text-primary text-xs font-bold">
-                            <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span> Checking
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold">
-                            Queued
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Coherence row */}
-                {files.length > 1 && (
-                  <div className="bg-primary rounded-xl p-5 flex items-center gap-4">
-                    <div className="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="material-symbols-outlined text-on-primary-container text-base">hub</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-headline font-semibold text-white text-sm">Cross-Document Coherence Check</p>
-                      <p className="text-xs text-primary-fixed/70">Checks for inconsistencies between all documents</p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      {jobStatus === "completed" ? (
-                        <span className="material-symbols-outlined text-primary-fixed" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                      ) : (
-                        <span className="material-symbols-outlined text-primary-fixed/50 animate-spin">progress_activity</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {jobStatus === "failed" && (
-                <Link href="/upload" className="inline-flex items-center gap-2 border border-outline-variant text-primary px-6 py-3 rounded-xl font-headline font-bold hover:bg-surface-container transition-all text-sm mt-4">
-                  <span className="material-symbols-outlined text-base">refresh</span>
-                  Try Again
-                </Link>
-              )}
-            </div>
-          </div>
-
-          {/* Right: AI agent panel */}
-          <div className="w-5/12 bg-white flex flex-col overflow-hidden">
-            <div className="p-8 space-y-6 flex-grow overflow-y-auto no-scrollbar">
-              <div className="flex items-center justify-between">
-                <h3 className="font-headline font-black text-xl text-primary tracking-tighter">
-                  AI Auditor Intelligence
-                </h3>
-                <span className="text-xs font-bold px-2 py-1 bg-primary text-white rounded">ACTIVE</span>
-              </div>
-
-              {/* Agent activity cards */}
-              <div className="space-y-3">
-                {files.slice(0, 3).map((file, idx) => {
-                  const prog = docStatuses.get(file.docType);
-                  const st = prog?.status ?? "pending";
-                  const label = DOC_TYPE_LABELS[file.docType as DocType] ?? file.docType;
-                  return (
-                    <div
-                      key={file.docType}
-                      className={`p-4 rounded-xl flex items-center gap-4 ${
-                        st === "processing" ? "bg-primary-container text-white" : "bg-surface-container-low"
-                      }`}
-                    >
-                      <div
-                        className={`flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 ${
-                          st === "done" ? "bg-on-tertiary-container" : st === "processing" ? "bg-on-primary-container" : "bg-surface-container"
-                        }`}
-                      >
-                        <span className={`material-symbols-outlined text-sm ${st === "done" || st === "processing" ? "text-white" : "text-on-surface-variant"}`}>
-                          {st === "done" ? "check_circle" : st === "processing" ? "manage_search" : "description"}
-                        </span>
-                      </div>
-                      <div className="flex-grow min-w-0">
-                        <p className={`text-sm font-bold truncate ${st === "processing" ? "text-white" : "text-primary"}`}>
-                          Agent {idx + 1}: {label}
-                        </p>
-                        {st === "processing" && prog?.message && (
-                          <p className="text-[10px] text-primary-fixed/70 truncate">{prog.message}</p>
-                        )}
-                        {st === "processing" && (
-                          <div className="w-full h-1 rounded-full mt-2 overflow-hidden bg-primary">
-                            <div className="bg-on-primary-container h-full w-[60%] animate-pulse-bar" />
-                          </div>
-                        )}
-                      </div>
-                      {st === "done" && (
-                        <span className="material-symbols-outlined text-on-tertiary-container flex-shrink-0">check_circle</span>
-                      )}
-                      {st === "processing" && (
-                        <span className="h-4 w-4 border-2 border-primary-fixed border-t-transparent animate-spin rounded-full flex-shrink-0" />
-                      )}
-                    </div>
-                  );
-                })}
-                {files.length > 1 && (
-                  <div className="p-4 rounded-xl bg-surface-container-low flex items-center gap-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-secondary-container flex-shrink-0">
-                      <span className="material-symbols-outlined text-on-secondary-container text-sm">hub</span>
-                    </div>
-                    <div className="flex-grow">
-                      <p className="text-sm font-bold text-primary">Orchestrator: Cross-referencing...</p>
-                      <p className="text-[10px] text-on-surface-variant">Matching against CSO Guidelines 2024</p>
-                    </div>
-                    {jobStatus !== "completed" && (
-                      <span className="h-4 w-4 border-2 border-secondary-container border-t-transparent animate-spin rounded-full flex-shrink-0" />
-                    )}
-                    {jobStatus === "completed" && (
-                      <span className="material-symbols-outlined text-on-tertiary-container text-base flex-shrink-0">check_circle</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Bento stats */}
-              <div className="grid grid-cols-2 gap-3 mt-8">
-                <div className="p-4 bg-surface-container rounded-xl">
-                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider block">Docs Checked</span>
-                  <p className="text-2xl font-headline font-black text-on-tertiary-container">{doneCount}</p>
-                </div>
-                <div className="p-4 bg-surface-container rounded-xl">
-                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider block">Total</span>
-                  <p className="text-2xl font-headline font-black text-primary">{files.length}</p>
-                </div>
-              </div>
-
-              {/* Live AI Output */}
-              <div className="mt-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-on-surface-variant text-sm">smart_toy</span>
-                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider">
-                    Live AI Output
-                  </span>
-                  {streamDocLabel && (
-                    <span className="ml-auto text-[9px] font-mono text-primary truncate max-w-[120px]">
-                      {streamDocLabel}
-                    </span>
+          {showLog && (
+            <div
+              ref={streamBoxRef}
+              style={{
+                marginTop: 8,
+                background: "#0e1614",
+                borderRadius: 12, padding: "16px 20px",
+                fontFamily: "ui-monospace, Menlo, monospace",
+                fontSize: 12, lineHeight: 1.65,
+                color: "#c6d3cd", maxHeight: 220, overflow: "auto",
+              }}
+            >
+              {streamContent ? (
+                <span style={{ color: "#86efac", whiteSpace: "pre-wrap" }}>
+                  {streamContent}
+                  {!complete && (
+                    <span style={{ display: "inline-block", marginLeft: 2, animation: "pulse-dot 1s ease-in-out infinite" }}>_</span>
                   )}
-                  {jobStatus !== "completed" && jobStatus !== "failed" && (
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-on-tertiary-container animate-pulse" />
-                  )}
-                </div>
-                <div
-                  ref={streamBoxRef}
-                  className="bg-[#0d1117] rounded-xl p-4 max-h-56 overflow-y-auto no-scrollbar font-mono"
-                >
-                  {streamContent ? (
-                    <p className="text-[10px] text-green-400 leading-relaxed whitespace-pre-wrap break-words">
-                      {streamContent}
-                      {jobStatus !== "completed" && (
-                        <span className="inline-block w-1.5 h-3 bg-green-400 ml-0.5 animate-pulse" />
-                      )}
-                    </p>
-                  ) : (
-                    <p className="text-[10px] text-green-400/30 font-mono">
-                      {jobStatus === "pending" ? "Waiting for AI..." : jobStatus === "completed" ? "Analysis complete." : "Initializing..."}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Live Diagnostic Logs */}
-              <div className="mt-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="material-symbols-outlined text-on-surface-variant text-sm">terminal</span>
-                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-wider">Diagnostic Logs</span>
-                  {jobStatus !== "completed" && jobStatus !== "failed" && (
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-on-tertiary-container animate-pulse ml-auto" />
-                  )}
-                </div>
-                <div className="bg-surface-container rounded-xl p-4 space-y-2 max-h-48 overflow-y-auto no-scrollbar font-label">
-                  <div className="flex items-start gap-2">
-                    <span className="text-on-surface-variant/40 text-[10px] font-mono mt-0.5 flex-shrink-0">SYS</span>
-                    <span className="text-[11px] text-on-surface-variant">
-                      Job <span className="font-mono text-primary">{jobId.slice(0, 8)}</span> — status: <span className="font-bold">{jobStatus}</span>
-                    </span>
-                  </div>
-                  {progress.map((p, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className={`text-[10px] font-mono mt-0.5 flex-shrink-0 ${
-                        p.status === "error" ? "text-error" : p.status === "done" ? "text-on-tertiary-container" : "text-secondary"
-                      }`}>
-                        {p.status === "error" ? "ERR" : p.status === "done" ? "OK " : "RUN"}
-                      </span>
-                      <span className={`text-[11px] leading-relaxed ${p.status === "error" ? "text-error" : "text-on-surface-variant"}`}>
-                        [{DOC_TYPE_LABELS[p.docType as DocType] ?? p.docType}] {p.message ?? p.status}
-                      </span>
-                    </div>
-                  ))}
-                  {progress.length === 0 && jobStatus === "pending" && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] font-mono text-on-surface-variant/40 mt-0.5">SYS</span>
-                      <span className="text-[11px] text-on-surface-variant/60">Starting AI agents...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-6 bg-surface-container-low flex-shrink-0">
-              {jobStatus === "completed" ? (
-                <Link
-                  href={`/results/${jobId}`}
-                  className="w-full py-4 premium-gradient text-white rounded-xl font-headline font-bold flex items-center justify-center gap-2 shadow-xl shadow-primary/20 hover:-translate-y-0.5 transition-all text-sm"
-                >
-                  <span className="material-symbols-outlined text-base">analytics</span>
-                  View Results
-                </Link>
+                </span>
               ) : (
-                <div className="w-full py-4 bg-surface-container text-on-surface-variant rounded-xl font-headline font-bold flex items-center justify-center gap-2 text-sm">
-                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
-                  Audit in Progress...
-                </div>
+                <span style={{ color: "rgba(198,211,205,0.4)" }}>
+                  {jobStatus === "pending" ? "Waiting for agents…" : "Initializing…"}
+                </span>
               )}
             </div>
-          </div>
-        </section>
+          )}
+        </div>
+
+        {jobStatus === "failed" && (
+          <Link
+            href="/upload"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              marginTop: 32,
+              border: "1px solid var(--hairline)",
+              color: "var(--ink)", padding: "12px 18px",
+              borderRadius: 999,
+              fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            Try again
+          </Link>
+        )}
       </main>
     </div>
   );
@@ -508,11 +474,9 @@ async function runAllAgents(
     const idx = progress.findIndex((p) => p.docType === docType);
     if (idx >= 0) progress[idx] = entry; else progress.push(entry);
     updateJobState({});
-    // Persist progress to DB in background (non-blocking)
     patchJob(jobId, { progress }).catch(() => {});
   }
 
-  // Mark job as processing on first doc
   await patchJob(jobId, { status: "processing" });
   updateJobState({ status: "processing" });
 
@@ -526,9 +490,7 @@ async function runAllAgents(
 
     let output: AgentOutput;
     try {
-      if (!agentFn) {
-        throw new Error(`No agent for ${docType}`);
-      }
+      if (!agentFn) throw new Error(`No agent for ${docType}`);
       output = await agentFn({
         docType,
         text: file.text,
@@ -547,7 +509,6 @@ async function runAllAgents(
     results[docType] = { ...output, rawText: file.text?.slice(0, 3000) };
     await markProgress(docType, "done", output.summary);
 
-    // Save incremental results to DB
     const isLast = !hasCoherence && i === files.length - 1;
     await patchJob(jobId, {
       results,
@@ -556,11 +517,10 @@ async function runAllAgents(
     if (isLast) updateJobState({ status: "completed" });
   }
 
-  // Run coherence check if multiple documents
   if (hasCoherence) {
     await markProgress("COHERENCE", "processing", "Running cross-document coherence check...");
-
     onStreamDocChange("Cross-Document Coherence Check");
+
     let coherenceOutput: AgentOutput;
     try {
       coherenceOutput = await checkCoherence({
@@ -579,7 +539,6 @@ async function runAllAgents(
 
     results["COHERENCE"] = { ...coherenceOutput, docType: "AFORM" };
     await markProgress("COHERENCE", "done", coherenceOutput.summary);
-
     await patchJob(jobId, { results, status: "completed" });
     updateJobState({ status: "completed" });
   }
