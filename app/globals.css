@@ -144,3 +144,51 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
 }
+
+/* Logo check draw-on */
+.gc-draw path {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: gc-draw 0.55s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
+}
+@keyframes gc-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Scroll-reveal */
+.gc-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.gc-reveal.gc-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.gc-reveal[data-reveal-delay="1"] { transition-delay: 0.08s; }
+.gc-reveal[data-reveal-delay="2"] { transition-delay: 0.16s; }
+.gc-reveal[data-reveal-delay="3"] { transition-delay: 0.24s; }
+
+/* Issue row stagger */
+@keyframes stagger-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gc-stagger > * {
+  animation: stagger-in 0.28s ease forwards;
+  opacity: 0;
+}
+.gc-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.gc-stagger > *:nth-child(2) { animation-delay: 0.07s; }
+.gc-stagger > *:nth-child(3) { animation-delay: 0.11s; }
+.gc-stagger > *:nth-child(4) { animation-delay: 0.15s; }
+.gc-stagger > *:nth-child(5) { animation-delay: 0.19s; }
+
+/* Screen-level entry */
+@keyframes gc-screen-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gc-screen-enter {
+  animation: gc-screen-enter 0.32s ease forwards;
+}
