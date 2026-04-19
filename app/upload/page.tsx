@@ -5,17 +5,134 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { DocType } from "@/lib/supabase";
 import { DOC_TYPE_LABELS } from "@/lib/supabase";
+import { Logo, StepCrumbs } from "@/app/components/logo";
+import { ArrowRight, ArrowLeft, Upload, FileIcon, X } from "@/app/components/icons";
 
 interface UploadedFile {
   id: string;
   file: File;
   docType: DocType | "";
-  /** Base64 page images rendered client-side (AFORM only) */
   pages: string[];
   rendering: boolean;
 }
 
 const DOC_OPTIONS = Object.entries(DOC_TYPE_LABELS) as [DocType, string][];
+
+function FileRow({
+  file,
+  isLast,
+  onType,
+  onRemove,
+}: {
+  file: UploadedFile;
+  isLast: boolean;
+  onType: (t: DocType) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "auto 1fr minmax(220px, 260px) auto",
+        gap: 16,
+        alignItems: "center",
+        padding: "16px 18px",
+        borderBottom: isLast ? "none" : "1px solid var(--hairline)",
+      }}
+    >
+      {/* File icon */}
+      <div
+        style={{
+          width: 36, height: 44, borderRadius: 4,
+          background: "var(--container)",
+          border: "1px solid var(--hairline)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--ink-mute)",
+          position: "relative",
+          flexShrink: 0,
+        }}
+      >
+        <FileIcon size={16} stroke={1.6} />
+        <span
+          style={{
+            position: "absolute", bottom: -6, right: -6,
+            fontFamily: "ui-monospace, Menlo, monospace",
+            fontSize: 8, fontWeight: 700,
+            background: "var(--ink)", color: "var(--paper)",
+            padding: "1px 4px", borderRadius: 2,
+          }}
+        >
+          PDF
+        </span>
+      </div>
+
+      {/* Name + meta */}
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontWeight: 500, fontSize: 14,
+            color: "var(--ink)", letterSpacing: "-0.005em",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}
+        >
+          {file.file.name}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--ink-mute)", fontFamily: "Inter, system-ui, sans-serif", marginTop: 2 }}>
+          {(file.file.size / 1024).toFixed(0)} KB
+          {file.rendering && (
+            <span style={{ color: "var(--accent-ink)", marginLeft: 8 }}>· Rendering pages…</span>
+          )}
+          {!file.rendering && (file.docType === "AFORM" || file.docType === "PPR") && file.pages.length > 0 && (
+            <span style={{ color: "var(--accent-ink)", marginLeft: 8 }}>· {file.pages.length} pages rendered</span>
+          )}
+        </div>
+      </div>
+
+      {/* Type selector */}
+      <select
+        value={file.docType}
+        onChange={(e) => onType(e.target.value as DocType)}
+        style={{
+          background: file.docType ? "var(--container-low)" : "var(--amber-soft)",
+          color: file.docType ? "var(--ink)" : "var(--amber-ink)",
+          border: "1px solid " + (file.docType ? "var(--hairline)" : "rgba(146,64,14,0.25)"),
+          padding: "9px 30px 9px 12px",
+          borderRadius: 8,
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: 13, fontWeight: 500,
+          letterSpacing: "-0.005em",
+          appearance: "none",
+          WebkitAppearance: "none",
+          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 10px center",
+          cursor: "pointer",
+          outline: "none",
+          width: "100%",
+        }}
+      >
+        <option value="">— Select type —</option>
+        {DOC_OPTIONS.map(([v, l]) => (
+          <option key={v} value={v}>{l}</option>
+        ))}
+      </select>
+
+      {/* Remove */}
+      <button
+        onClick={onRemove}
+        style={{
+          background: "transparent", border: "none",
+          color: "var(--ink-mute)", cursor: "pointer",
+          padding: 6, display: "flex", alignItems: "center",
+        }}
+        aria-label="Remove"
+      >
+        <X size={16} stroke={1.8} />
+      </button>
+    </div>
+  );
+}
 
 export default function UploadPage() {
   const router = useRouter();
@@ -51,7 +168,6 @@ export default function UploadPage() {
       prev.map((f) => (f.id === id ? { ...f, docType } : f))
     );
 
-    // Both AFORM and PPR use the vision pipeline — render pages as images.
     if (docType === "AFORM" || docType === "PPR") {
       const file = uploadedFiles.find((f) => f.id === id)?.file;
       if (file) {
@@ -59,7 +175,6 @@ export default function UploadPage() {
           prev.map((f) => (f.id === id ? { ...f, rendering: true } : f))
         );
         const { renderPdfToImages } = await import("@/lib/pdf");
-        // Both AFORM and PPR use scale 2.0; AFORM gets 3 strips, PPR gets none
         const pages = await renderPdfToImages(file, {
           scale: 2.0,
           maxPages: 10,
@@ -87,7 +202,6 @@ export default function UploadPage() {
     setError(null);
 
     try {
-      // AFORM and PPR use vision (pages already rendered); all others get text extraction.
       const { extractTextFromFile } = await import("@/lib/pdf");
       const filesPayload = await Promise.all(
         uploadedFiles.map(async (uf) => {
@@ -116,40 +230,72 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface font-body text-on-surface">
+    <div style={{ background: "var(--paper)", minHeight: "100vh", color: "var(--ink)" }}>
       {/* Nav */}
-      <header className="bg-slate-50/80 glass-nav shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-8 py-4">
-        <Link href="/" className="text-2xl font-black tracking-tighter font-headline bg-gradient-to-r from-emerald-900 to-emerald-700 bg-clip-text text-transparent">
-          GoCheck
-        </Link>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-tertiary-container/10 rounded-full">
-          <span className="h-2 w-2 rounded-full bg-on-tertiary-container" />
-          <span className="text-xs font-semibold text-on-tertiary-container font-label">Step 1: Upload</span>
+      <header
+        style={{
+          position: "sticky", top: 0, zIndex: 40,
+          background: "rgba(250,250,248,0.88)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          borderBottom: "1px solid var(--hairline)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200, margin: "0 auto",
+            padding: "18px 36px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <Link href="/" style={{ textDecoration: "none" }}>
+              <Logo />
+            </Link>
+            <StepCrumbs step={1} />
+          </div>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-16">
-        {/* Page title */}
-        <div className="mb-12">
-          <span className="font-headline text-primary font-extrabold tracking-widest text-xs uppercase mb-3 block">
-            Document Auditor
-          </span>
-          <h1 className="font-headline text-4xl font-black tracking-tighter text-primary mb-4">
-            Upload Your Documents
-          </h1>
-          <p className="text-on-surface-variant leading-relaxed">
-            Upload PDF files and assign a document type to each one. A-Forms and PPRs
-            are analyzed visually — pages render automatically when you select the type.
-          </p>
-        </div>
+      <main style={{ maxWidth: 820, margin: "0 auto", padding: "64px 36px 80px" }}>
+        <h1
+          style={{
+            fontFamily: "Manrope, system-ui, sans-serif",
+            fontWeight: 700, fontSize: 44,
+            letterSpacing: "-0.03em", lineHeight: 1.05,
+            color: "var(--ink)", margin: 0, marginBottom: 14,
+          }}
+        >
+          Upload documents.
+        </h1>
+        <p
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 16, lineHeight: 1.55,
+            color: "var(--ink-mute)", maxWidth: 560,
+            margin: "0 0 40px",
+          }}
+        >
+          Drop in your PDFs and tag each one. Activity Form and Project Proposal Form render
+          visually; everything else is parsed as text.
+        </p>
 
         {/* Drop zone */}
         <div
-          className={`upload-zone mb-8 ${dragging ? "active" : ""}`}
-          onDrop={handleDrop}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
+          onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
+          style={{
+            border: `1.5px dashed ${dragging ? "var(--accent)" : "var(--hairline-strong)"}`,
+            borderRadius: 14,
+            padding: "44px 24px",
+            textAlign: "center",
+            background: dragging ? "var(--accent-soft)" : "transparent",
+            cursor: "pointer",
+            transition: "background 160ms ease, border-color 160ms ease",
+            marginBottom: 32,
+          }}
         >
           <input
             ref={inputRef}
@@ -159,103 +305,133 @@ export default function UploadPage() {
             accept=".pdf,application/pdf"
             onChange={(e) => e.target.files && addFiles(e.target.files)}
           />
-          <span className="material-symbols-outlined text-5xl text-primary/30 mb-4 block">upload_file</span>
-          <p className="font-headline font-bold text-primary text-lg mb-1">
-            Drop PDF files here or click to browse
-          </p>
-          <p className="text-on-surface-variant text-sm">Supports PDF files only · Multiple files allowed</p>
+          <Upload size={28} stroke={1.6} style={{ color: "var(--ink-mute)" }} />
+          <div
+            style={{
+              marginTop: 14,
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontWeight: 600, fontSize: 15,
+              color: "var(--ink)", letterSpacing: "-0.01em",
+            }}
+          >
+            Drop PDFs here or click to browse
+          </div>
+          <div style={{ marginTop: 4, fontSize: 13, color: "var(--ink-mute)", fontFamily: "Inter, system-ui, sans-serif" }}>
+            PDF only · Multiple files OK
+          </div>
         </div>
 
         {/* File list */}
         {uploadedFiles.length > 0 && (
-          <div className="space-y-3 mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-4">
-              {uploadedFiles.length} file{uploadedFiles.length > 1 ? "s" : ""} selected
-            </p>
-            {uploadedFiles.map((uf) => (
-              <div key={uf.id} className="bg-surface-container-low rounded-xl p-5 flex items-center gap-4">
-                <div className="w-10 h-10 bg-surface-container-highest rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-on-surface-variant">description</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-headline font-semibold text-on-surface truncate text-sm">
-                    {uf.file.name}
-                  </p>
-                  <p className="text-xs text-on-surface-variant mt-0.5">
-                    {(uf.file.size / 1024).toFixed(0)} KB
-                    {(uf.docType === "AFORM" || uf.docType === "PPR") && uf.pages.length > 0 && (
-                      <span className="ml-2 text-on-tertiary-container font-semibold">
-                        · {uf.pages.length} pages rendered
-                      </span>
-                    )}
-                    {uf.rendering && (
-                      <span className="ml-2 text-primary font-semibold">
-                        · Rendering pages...
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {/* Doc type selector */}
-                <div className="flex-shrink-0 relative min-w-[220px]">
-                  <select
-                    value={uf.docType}
-                    onChange={(e) => handleDocTypeChange(uf.id, e.target.value as DocType)}
-                    className="w-full bg-transparent border-0 border-b-2 border-primary/40
-                               focus:border-primary focus:ring-0 outline-none transition-all
-                               font-body text-sm text-on-surface py-2 pr-6 cursor-pointer
-                               appearance-none"
-                  >
-                    <option value="" disabled>Select document type...</option>
-                    {DOC_OPTIONS.map(([type, label]) => (
-                      <option key={type} value={type}>{label}</option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-base">
-                    expand_more
-                  </span>
-                </div>
-                <button
-                  onClick={() => removeFile(uf.id)}
-                  className="text-on-surface-variant/40 hover:text-error transition-colors flex-shrink-0 p-1"
-                >
-                  <span className="material-symbols-outlined text-base">close</span>
-                </button>
-              </div>
-            ))}
-          </div>
+          <>
+            <div
+              style={{
+                display: "flex", alignItems: "baseline", justifyContent: "space-between",
+                marginBottom: 14,
+              }}
+            >
+              <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500, fontSize: 12, color: "var(--ink-mute)" }}>
+                {uploadedFiles.length} file{uploadedFiles.length > 1 ? "s" : ""} · {uploadedFiles.filter((f) => f.docType).length} tagged
+              </span>
+              <span style={{ fontSize: 12, color: "var(--ink-mute)", fontFamily: "Inter, system-ui, sans-serif" }}>
+                Tap a row to assign a type
+              </span>
+            </div>
+            <div
+              style={{
+                border: "1px solid var(--hairline)",
+                borderRadius: 12, overflow: "hidden",
+                background: "var(--paper)",
+                marginBottom: 10,
+              }}
+            >
+              {uploadedFiles.map((uf, i) => (
+                <FileRow
+                  key={uf.id}
+                  file={uf}
+                  isLast={i === uploadedFiles.length - 1}
+                  onType={(t) => handleDocTypeChange(uf.id, t)}
+                  onRemove={() => removeFile(uf.id)}
+                />
+              ))}
+            </div>
+          </>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="flex items-center gap-3 bg-error-container text-on-error-container rounded-xl p-4 mb-6">
-            <span className="material-symbols-outlined text-base">error</span>
-            <p className="text-sm">{error}</p>
+          <div
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              background: "#fef2f2", border: "1px solid rgba(186,26,26,0.2)",
+              color: "#ba1a1a", borderRadius: 10, padding: "12px 16px",
+              fontFamily: "Inter, system-ui, sans-serif", fontSize: 13,
+              marginBottom: 20,
+            }}
+          >
+            {error}
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-4">
-          <Link href="/" className="text-primary text-sm font-headline font-bold flex items-center gap-1 hover:opacity-70 transition-opacity">
-            <span className="material-symbols-outlined text-base">arrow_back</span>
-            Back
+        {/* Actions */}
+        <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Link
+            href="/"
+            style={{
+              background: "transparent", border: "none",
+              display: "inline-flex", alignItems: "center", gap: 6,
+              color: "var(--ink)", textDecoration: "none",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 14, fontWeight: 600,
+              letterSpacing: "-0.005em",
+            }}
+          >
+            <ArrowLeft size={14} stroke={2} /> Back
           </Link>
           <button
             onClick={handleSubmit}
             disabled={!canSubmit || submitting}
-            className="premium-gradient text-white px-8 py-4 rounded-xl font-headline font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            style={{
+              background: canSubmit && !submitting ? "var(--ink)" : "var(--container)",
+              color: canSubmit && !submitting ? "var(--paper)" : "var(--ink-mute)",
+              border: "none",
+              padding: "16px 26px",
+              borderRadius: 999,
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontWeight: 600, fontSize: 15,
+              cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
+              display: "inline-flex", alignItems: "center", gap: 10,
+              letterSpacing: "-0.005em",
+              transition: "background 120ms ease",
+            }}
           >
             {submitting ? (
               <>
-                <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
-                Preparing...
+                <span
+                  style={{
+                    width: 14, height: 14, borderRadius: "50%",
+                    border: "1.5px solid var(--ink-mute)",
+                    borderTopColor: "transparent",
+                    animation: "spin 0.8s linear infinite",
+                    display: "inline-block",
+                  }}
+                />
+                Preparing…
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined text-base">analytics</span>
-                Run Audit
+                Run audit
                 {uploadedFiles.length > 0 && (
-                  <span className="bg-white/20 rounded-full px-2 py-0.5 text-xs">
+                  <span
+                    style={{
+                      background: "rgba(255,255,255,0.2)",
+                      padding: "2px 8px", borderRadius: 999, fontSize: 11,
+                    }}
+                  >
                     {uploadedFiles.length}
                   </span>
                 )}
+                <ArrowRight size={14} stroke={2.2} />
               </>
             )}
           </button>
@@ -264,4 +440,3 @@ export default function UploadPage() {
     </div>
   );
 }
-

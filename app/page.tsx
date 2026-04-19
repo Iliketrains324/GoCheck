@@ -1,283 +1,638 @@
 import Link from "next/link";
+import { Check, Alert, ArrowRight } from "@/app/components/icons";
+import { Logo } from "@/app/components/logo";
+
+function HeroArtifact() {
+  const rows = [
+    { doc: "AFORM — Section 5 · Signatories",    status: "ok",   note: "All required signatories present" },
+    { doc: "PPR — Budget ledger",                 status: "warn", note: "Food line exceeds 30% cap" },
+    { doc: "Letter of Invitation — Venue",        status: "ok",   note: "" },
+    { doc: "Venue Reservation — Room GK302",      status: "warn", note: "Date mismatch with AFORM" },
+    { doc: "Cross-document coherence",            status: "scan", note: "Checking date consistency…" },
+  ] as const;
+
+  return (
+    <div
+      style={{
+        background: "var(--paper)",
+        border: "1px solid var(--hairline)",
+        borderRadius: 16,
+        overflow: "hidden",
+        boxShadow: "0 1px 0 rgba(15,46,28,0.02), 0 30px 60px -30px rgba(15,46,28,0.18)",
+      }}
+    >
+      {/* top bar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 20px",
+          borderBottom: "1px solid var(--hairline)",
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            style={{
+              width: 7, height: 7, borderRadius: "50%",
+              background: "var(--accent)",
+              boxShadow: "0 0 0 3px var(--accent-soft)",
+            }}
+          />
+          <span style={{ color: "var(--ink)", fontWeight: 600 }}>Live audit</span>
+          <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--ink-mute)", display: "inline-block" }} />
+          <span style={{ color: "var(--ink-mute)" }}>Job #A4F21E</span>
+        </div>
+        <span style={{ color: "var(--ink-mute)", fontFamily: "ui-monospace, Menlo, monospace", fontSize: 11 }}>
+          04/20/26 · 14:22
+        </span>
+      </div>
+
+      {/* rows */}
+      <div>
+        {rows.map((r, i) => (
+          <div
+            key={i}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "24px 1fr auto",
+              gap: 16,
+              alignItems: "center",
+              padding: "16px 20px",
+              borderBottom: i < rows.length - 1 ? "1px solid var(--hairline)" : "none",
+            }}
+          >
+            <span style={{ display: "inline-flex" }}>
+              {r.status === "ok" && <Check size={16} stroke={2.2} style={{ color: "var(--accent)" }} />}
+              {r.status === "warn" && <Alert size={16} stroke={2} style={{ color: "var(--amber-ink)" }} />}
+              {r.status === "scan" && (
+                <span
+                  style={{
+                    width: 14, height: 14, borderRadius: "50%",
+                    border: "1.5px solid var(--ink-mute)",
+                    borderTopColor: "transparent",
+                    display: "inline-block",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
+              )}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontWeight: 500, fontSize: 13.5, color: "var(--ink)",
+                  letterSpacing: "-0.005em",
+                  marginBottom: r.note ? 2 : 0,
+                }}
+              >
+                {r.doc}
+              </div>
+              {r.note && (
+                <div
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontSize: 12.5,
+                    color: r.status === "warn" ? "var(--amber-ink)" : "var(--ink-mute)",
+                  }}
+                >
+                  {r.note}
+                </div>
+              )}
+            </div>
+            <span
+              style={{
+                fontFamily: "ui-monospace, Menlo, monospace",
+                fontSize: 11, color: "var(--ink-mute)",
+                textTransform: "uppercase", letterSpacing: "0.04em",
+              }}
+            >
+              {r.status === "ok" ? "pass" : r.status === "warn" ? "fix" : "scan"}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* footer */}
+      <div
+        style={{
+          padding: "14px 20px",
+          background: "var(--container-low)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}
+      >
+        <span style={{ fontSize: 12, color: "var(--ink-mute)", fontFamily: "Inter, system-ui, sans-serif" }}>
+          2 fixes · 2 passes · 1 running
+        </span>
+        <span
+          style={{
+            fontFamily: "Manrope, system-ui, sans-serif",
+            fontWeight: 700, fontSize: 18, color: "var(--ink)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          87<span style={{ color: "var(--ink-mute)", fontWeight: 500, fontSize: 14 }}> / 100</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const CHECKS = [
+  {
+    name: "Signatory completeness",
+    desc: "A-Form needs the Org President, Faculty Moderator, and VP or Dean sign-off depending on activity classification.",
+  },
+  {
+    name: "Date and time integrity",
+    desc: "Activity must have exact start and end time. Submission must land at least two weeks before the event date.",
+  },
+  {
+    name: "Budget 30% food cap",
+    desc: "Food and meals lines are capped at 30% of total budget. Every expense needs a matching projected income line.",
+  },
+  {
+    name: "Cross-document coherence",
+    desc: "Dates, venue, attendees, and titles must match across the Activity Form, Project Proposal Form, invitations, and tickets.",
+  },
+];
 
 export default function HomePage() {
   return (
-    <div className="bg-surface font-body text-on-surface">
+    <div style={{ background: "var(--paper)", color: "var(--ink)", minHeight: "100vh" }}>
       {/* Nav */}
-      <header className="bg-slate-50/80 glass-nav shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-8 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="text-2xl font-black tracking-tighter font-headline bg-gradient-to-r from-emerald-900 to-emerald-700 bg-clip-text text-transparent">
-            GoCheck
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <span className="text-primary font-bold border-b-2 border-primary pb-1 text-sm font-headline">Home</span>
-            <span className="text-on-surface-variant font-medium text-sm cursor-pointer hover:text-primary transition-colors">Guidelines</span>
-          </nav>
-        </div>
-        <Link
-          href="/upload"
-          className="premium-gradient text-white px-6 py-2.5 rounded-xl font-headline font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+      <header
+        style={{
+          position: "sticky", top: 0, zIndex: 40,
+          background: "rgba(250,250,248,0.88)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+          borderBottom: "1px solid var(--hairline)",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1200, margin: "0 auto",
+            padding: "18px 36px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}
         >
-          Start Audit
-        </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
+            <Link href="/" style={{ textDecoration: "none" }}>
+              <Logo />
+            </Link>
+            <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
+              {(["Overview"] as const).map((label) => (
+                <Link
+                  key={label}
+                  href="/"
+                  style={{
+                    background: "transparent",
+                    padding: "6px 0",
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    color: "var(--ink)",
+                    textDecoration: "none",
+                    borderBottom: "1.5px solid var(--ink)",
+                    letterSpacing: "-0.005em",
+                  }}
+                >
+                  {label}
+                </Link>
+              ))}
+              {(["Guidelines"] as const).map((label) => (
+                <span
+                  key={label}
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontWeight: 500,
+                    fontSize: 14,
+                    color: "var(--ink-mute)",
+                    cursor: "default",
+                    letterSpacing: "-0.005em",
+                    borderBottom: "1.5px solid transparent",
+                  }}
+                >
+                  {label}
+                </span>
+              ))}
+            </nav>
+          </div>
+          <Link
+            href="/upload"
+            style={{
+              background: "var(--ink)",
+              color: "var(--paper)",
+              border: "none",
+              padding: "10px 18px",
+              borderRadius: 999,
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontWeight: 600,
+              fontSize: 13,
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              letterSpacing: "-0.005em",
+            }}
+          >
+            New audit <ArrowRight size={14} stroke={2.2} />
+          </Link>
+        </div>
       </header>
 
       <main>
         {/* Hero */}
-        <section className="relative px-8 pt-20 pb-32 overflow-hidden">
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-            <div className="z-10">
-              <span className="font-headline text-primary font-extrabold tracking-widest text-xs uppercase mb-4 block">
-                DLSU Student Auditor AI
+        <section style={{ padding: "80px 36px 100px", maxWidth: 1200, margin: "0 auto" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.15fr) minmax(0, 1fr)",
+              gap: 72,
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontWeight: 500,
+                  fontSize: 12,
+                  color: "var(--ink-mute)",
+                  marginBottom: 20,
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+                For DLSU student organizations
               </span>
-              <h1 className="font-headline text-6xl lg:text-7xl font-black tracking-tighter text-primary leading-[0.95] mb-6">
-                End the <br />
-                <span className="text-on-tertiary-container">Correction Loop.</span>
+              <h1
+                style={{
+                  fontFamily: "Manrope, system-ui, sans-serif",
+                  fontWeight: 700,
+                  fontSize: "clamp(44px, 5.4vw, 72px)",
+                  lineHeight: 1.02,
+                  letterSpacing: "-0.035em",
+                  color: "var(--ink)",
+                  margin: 0,
+                  marginBottom: 22,
+                }}
+              >
+                Catch every pre-act mistake
+                <br />
+                <span style={{ color: "var(--ink-mute)" }}>before CSO does.</span>
               </h1>
-              <p className="font-body text-lg text-on-surface-variant max-w-lg mb-10 leading-relaxed">
-                Submit your pre-activity documents — AFORM, PPR, invitations, venue tickets, and more — and know exactly what needs fixing before you walk into APS.
+              <p
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontSize: 17,
+                  lineHeight: 1.55,
+                  color: "var(--ink-mute)",
+                  maxWidth: 480,
+                  margin: "0 0 36px",
+                }}
+              >
+                Upload your Activity Form, Project Proposal Form, invitation letters, and venue tickets.
+                GoCheck audits each against current CSO and SLIFE policy and flags exactly what to fix —
+                before you submit.
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <Link
                   href="/upload"
-                  className="premium-gradient text-white px-8 py-4 rounded-xl font-headline font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                  style={{
+                    background: "var(--ink)",
+                    color: "var(--paper)",
+                    padding: "16px 26px",
+                    borderRadius: 999,
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontWeight: 600,
+                    fontSize: 15,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 10,
+                    letterSpacing: "-0.005em",
+                  }}
                 >
-                  <span className="material-symbols-outlined text-[20px]">upload</span>
-                  Start Audit
+                  Start an audit <ArrowRight size={15} stroke={2.2} />
                 </Link>
-                <button className="border border-outline-variant text-primary px-8 py-4 rounded-xl font-headline font-bold hover:bg-surface-container transition-all">
-                  View Guidelines
-                </button>
+                <span
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontWeight: 600,
+                    fontSize: 15,
+                    color: "var(--ink)",
+                    cursor: "default",
+                    padding: "16px 0",
+                    letterSpacing: "-0.005em",
+                  }}
+                >
+                  Read what gets checked
+                </span>
               </div>
             </div>
 
-            {/* Bento Visual */}
-            <div className="relative grid grid-cols-6 grid-rows-6 gap-4 h-[500px]">
-              <div className="col-span-4 row-span-4 bg-surface-container-lowest rounded-xl shadow-sm p-6 flex flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <div className="w-12 h-12 bg-primary-fixed rounded-lg flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary">description</span>
-                  </div>
-                  <span className="bg-tertiary-container/10 text-on-tertiary-container px-3 py-1 rounded-full text-xs font-bold font-label">
-                    Active Analysis
-                  </span>
-                </div>
-                <div>
-                  <div className="h-2 w-full bg-surface-container rounded-full mb-2 overflow-hidden">
-                    <div className="h-full bg-on-tertiary-container w-2/3 rounded-full" />
-                  </div>
-                  <p className="text-sm font-bold text-primary font-headline">
-                    Reviewing: A-Form signatory fields — Section 5
-                  </p>
-                </div>
-              </div>
-              <div className="col-span-2 row-span-3 bg-secondary-container rounded-xl p-4 flex flex-col items-center justify-center text-on-secondary-container">
-                <span className="material-symbols-outlined text-4xl mb-2">warning</span>
-                <span className="text-3xl font-black font-headline">12</span>
-                <span className="text-[10px] font-bold uppercase tracking-tighter">Fixes Needed</span>
-              </div>
-              <div className="col-span-2 row-span-3 bg-primary rounded-xl p-6 flex flex-col justify-end">
-                <span className="text-white font-headline font-black text-4xl">88%</span>
-                <span className="text-primary-fixed text-xs font-bold">Compliance Score</span>
-              </div>
-              <div className="col-span-4 row-span-2 bg-surface-container-high rounded-xl p-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
-                  <span className="material-symbols-outlined text-tertiary">verified_user</span>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-on-surface leading-tight">CSO Guideline v2024</p>
-                  <p className="text-[10px] text-on-surface-variant">Validated Real-time</p>
-                </div>
-              </div>
+            <div>
+              <HeroArtifact />
             </div>
           </div>
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed/30 blur-[120px] rounded-full -z-10" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-tertiary-fixed/20 blur-[120px] rounded-full -z-10" />
         </section>
 
-        {/* Process Section */}
-        <section className="bg-surface-container-low py-24 px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-16 text-center">
-              <h2 className="font-headline text-4xl font-black text-primary tracking-tight mb-4">
-                Precision Workflow
+        {/* Process */}
+        <section style={{ borderTop: "1px solid var(--hairline)", padding: "80px 36px" }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+            <div style={{ marginBottom: 48 }}>
+              <span
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontWeight: 500, fontSize: 12, color: "var(--ink-mute)",
+                  display: "block", marginBottom: 14,
+                }}
+              >
+                How it works
+              </span>
+              <h2
+                style={{
+                  fontFamily: "Manrope, system-ui, sans-serif",
+                  fontWeight: 700, fontSize: 34,
+                  lineHeight: 1.1, letterSpacing: "-0.025em",
+                  margin: 0, color: "var(--ink)",
+                }}
+              >
+                Three steps,
+                <br />
+                usually under a minute.
               </h2>
-              <div className="w-20 h-1 bg-on-tertiary-container mx-auto rounded-full" />
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 1,
+                background: "var(--hairline)",
+                border: "1px solid var(--hairline)",
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
               {[
-                {
-                  n: "01",
-                  title: "Upload Documents",
-                  body: "Drag and drop your AFORM, PPR, or other pre-activity files. Supports 13 document types at once.",
-                },
-                {
-                  n: "02",
-                  title: "AI Audit",
-                  body: "Dedicated skill agents cross-reference each document against current CSO and SLIFE event policies automatically.",
-                },
-                {
-                  n: "03",
-                  title: "Get Correction Checklist",
-                  body: "Download a detailed summary of required changes, ready to fix before official submission.",
-                },
-              ].map((step) => (
-                <div
-                  key={step.n}
-                  className="bg-surface-container-lowest p-10 rounded-xl hover:-translate-y-1 transition-all duration-300 group"
-                >
-                  <div className="text-6xl font-black font-headline text-surface-container mb-6 group-hover:text-primary-fixed transition-colors">
-                    {step.n}
+                { n: "01", t: "Upload",  d: "Drop in PDFs for any of the 13 pre-activity document types. Tag each with its type." },
+                { n: "02", t: "Audit",   d: "Dedicated agents read each document visually and against the live CSO and SLIFE rule set." },
+                { n: "03", t: "Fix",     d: "A concrete, printable checklist of exactly what to change — no guessing at reviewer comments." },
+              ].map((s) => (
+                <div key={s.n} style={{ background: "var(--paper)", padding: "36px 32px" }}>
+                  <div
+                    style={{
+                      fontFamily: "ui-monospace, Menlo, monospace",
+                      fontSize: 11, color: "var(--ink-mute)",
+                      marginBottom: 20, letterSpacing: "0.04em",
+                    }}
+                  >
+                    {s.n}
                   </div>
-                  <h3 className="font-headline text-xl font-bold text-primary mb-3">{step.title}</h3>
-                  <p className="font-body text-on-surface-variant leading-relaxed">{step.body}</p>
+                  <h3
+                    style={{
+                      fontFamily: "Manrope, system-ui, sans-serif",
+                      fontWeight: 600, fontSize: 22,
+                      letterSpacing: "-0.02em", color: "var(--ink)",
+                      margin: 0, marginBottom: 10,
+                    }}
+                  >
+                    {s.t}
+                  </h3>
+                  <p
+                    style={{
+                      fontFamily: "Inter, system-ui, sans-serif",
+                      fontSize: 14, lineHeight: 1.55,
+                      color: "var(--ink-mute)", margin: 0,
+                    }}
+                  >
+                    {s.d}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Asymmetrical Info Section */}
-        <section className="py-24 px-8 max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-5 order-2 lg:order-1">
-            <div className="bg-surface-container-lowest p-8 rounded-xl space-y-6">
-              <div className="flex items-center gap-4 pb-6 border-b border-surface-container">
-                <span className="material-symbols-outlined text-secondary">menu_book</span>
-                <span className="font-headline font-bold text-primary text-sm">CSO Checking Rules — What Gets Flagged</span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  {
-                    label: "Signatory Requirements",
-                    detail: "A-Form needs Org President + Faculty Moderator + VP/Dean sign-off depending on activity classification",
-                  },
-                  {
-                    label: "Date & Time Completeness",
-                    detail: "Activity must have exact start AND end time; must be submitted at least 2 weeks before the event date",
-                  },
-                  {
-                    label: "Budget Food Cap (30%)",
-                    detail: "Food/meals cannot exceed 30% of total project budget; all expense lines must have corresponding projected income",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="p-4 bg-surface-container-low rounded-lg cursor-default"
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-body font-semibold text-sm text-primary">{item.label}</span>
+        {/* What gets flagged */}
+        <section
+          style={{
+            borderTop: "1px solid var(--hairline)",
+            padding: "80px 36px",
+            background: "var(--container-low)",
+          }}
+        >
+          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 380px) minmax(0, 1fr)", gap: 80 }}>
+              <div>
+                <span
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontWeight: 500, fontSize: 12, color: "var(--ink-mute)",
+                    display: "block", marginBottom: 14,
+                  }}
+                >
+                  What gets flagged
+                </span>
+                <h2
+                  style={{
+                    fontFamily: "Manrope, system-ui, sans-serif",
+                    fontWeight: 700, fontSize: 34,
+                    lineHeight: 1.1, letterSpacing: "-0.025em",
+                    margin: "0 0 20px", color: "var(--ink)",
+                  }}
+                >
+                  Built from the actual CSO rulebook.
+                </h2>
+                <p
+                  style={{
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontSize: 15, lineHeight: 1.6,
+                    color: "var(--ink-mute)", margin: 0,
+                  }}
+                >
+                  Each agent checks a specific slice of CSO and SLIFE policy — not a generic
+                  prompt. Rules are updated against the latest guideline version so your audit
+                  matches what the reviewer sees.
+                </p>
+                <div style={{ marginTop: 36, display: "flex", gap: 36 }}>
+                  {[
+                    { v: "13",  l: "Document types" },
+                    { v: "~40s", l: "Median audit time" },
+                  ].map((stat) => (
+                    <div key={stat.l}>
+                      <div
+                        style={{
+                          fontFamily: "Manrope, system-ui, sans-serif",
+                          fontWeight: 700, fontSize: 32,
+                          letterSpacing: "-0.03em", color: "var(--ink)",
+                        }}
+                      >
+                        {stat.v}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12, color: "var(--ink-mute)",
+                          fontFamily: "Inter, system-ui, sans-serif",
+                        }}
+                      >
+                        {stat.l}
+                      </div>
                     </div>
-                    <p className="text-xs text-on-surface-variant leading-relaxed">{item.detail}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="lg:col-span-7 order-1 lg:order-2">
-            <h2 className="font-headline text-5xl font-black text-primary leading-tight mb-6 tracking-tighter">
-              Built for the Archer.
-              <br />
-              Audit with Authority.
-            </h2>
-            <p className="font-body text-lg text-on-surface-variant mb-8 leading-relaxed">
-              Designed specifically for De La Salle University student organizations. Our AI
-              checks against actual approved PPRs and the latest policy updates from the Council
-              of Student Organizations.
-            </p>
-            <div className="grid grid-cols-2 gap-8">
+
               <div>
-                <p className="text-3xl font-black font-headline text-primary">13</p>
-                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Document Types</p>
-              </div>
-              <div>
-                <p className="text-3xl font-black font-headline text-primary">100%</p>
-                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">AI-Powered</p>
+                <div style={{ background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 12 }}>
+                  {CHECKS.map((c, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: "22px 28px",
+                        borderBottom: i < CHECKS.length - 1 ? "1px solid var(--hairline)" : "none",
+                        display: "grid",
+                        gridTemplateColumns: "32px 1fr",
+                        gap: 18,
+                        alignItems: "start",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "ui-monospace, Menlo, monospace",
+                          fontSize: 11, color: "var(--ink-mute)",
+                          marginTop: 4, letterSpacing: "0.04em",
+                        }}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <div>
+                        <div
+                          style={{
+                            fontFamily: "Inter, system-ui, sans-serif",
+                            fontWeight: 600, fontSize: 15,
+                            color: "var(--ink)", marginBottom: 4,
+                            letterSpacing: "-0.01em",
+                          }}
+                        >
+                          {c.name}
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: "Inter, system-ui, sans-serif",
+                            fontSize: 13.5, lineHeight: 1.55,
+                            color: "var(--ink-mute)",
+                          }}
+                        >
+                          {c.desc}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Canvas */}
-        <section className="px-8 pb-24">
-          <div className="max-w-7xl mx-auto premium-gradient rounded-3xl p-12 lg:p-20 relative overflow-hidden text-center">
-            <div className="relative z-10">
-              <h2 className="font-headline text-5xl font-black text-white mb-6">
-                Ready to skip the revision loop?
-              </h2>
-              <p className="text-primary-fixed/80 max-w-xl mx-auto mb-10 text-lg">
-                Get your CSO documents right the first time — before submission.
-              </p>
-              <Link
-                href="/upload"
-                className="bg-white text-primary px-10 py-5 rounded-xl font-headline font-black text-lg shadow-2xl shadow-black/20 hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-3"
-              >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  rocket_launch
-                </span>
-                Launch Auditor
-              </Link>
-            </div>
-            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-[100px] -mr-48 -mt-48" />
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-tertiary-fixed rounded-full blur-[100px] -ml-48 -mb-48" />
-            </div>
+        {/* CTA */}
+        <section style={{ padding: "100px 36px", textAlign: "center" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <h2
+              style={{
+                fontFamily: "Manrope, system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: "clamp(34px, 3.6vw, 48px)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.03em",
+                margin: 0,
+                color: "var(--ink)",
+              }}
+            >
+              Submit once. Not three times.
+            </h2>
+            <p
+              style={{
+                fontFamily: "Inter, system-ui, sans-serif",
+                fontSize: 16,
+                color: "var(--ink-mute)",
+                margin: "18px 0 32px",
+              }}
+            >
+              Free for DLSU student orgs. No account needed.
+            </p>
+            <Link
+              href="/upload"
+              style={{
+                background: "var(--ink)",
+                color: "var(--paper)",
+                padding: "16px 26px",
+                borderRadius: 999,
+                fontFamily: "Inter, system-ui, sans-serif",
+                fontWeight: 600,
+                fontSize: 15,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              Start an audit <ArrowRight size={15} stroke={2.2} />
+            </Link>
           </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-surface-container-highest py-16 px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
-          <div>
-            <span className="text-2xl font-black tracking-tighter text-primary mb-4 block font-headline">GoCheck</span>
-            <p className="text-sm text-on-surface-variant max-w-xs leading-relaxed">
-              An independent AI document auditor for DLSU student leadership and administrative excellence.
-            </p>
+      <footer style={{ borderTop: "1px solid var(--hairline)", padding: "40px 36px", background: "var(--paper)" }}>
+        <div
+          style={{
+            maxWidth: 1200, margin: "0 auto",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            flexWrap: "wrap", gap: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <Logo size={18} />
+            <span
+              style={{
+                fontSize: 12, color: "var(--ink-mute)",
+                fontFamily: "Inter, system-ui, sans-serif",
+              }}
+            >
+              An independent tool. Not affiliated with CSO.
+            </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-12">
-            <div>
-              <h4 className="font-headline font-bold text-primary mb-4 text-sm">Platform</h4>
-              <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li><Link href="/upload" className="hover:text-primary transition-colors">New Check</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-headline font-bold text-primary mb-4 text-sm">Resources</h4>
-              <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li>CSO Manual</li>
-                <li>SLIFE Guidelines</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-headline font-bold text-primary mb-4 text-sm">Contact</h4>
-              <ul className="space-y-2 text-sm text-on-surface-variant">
-                <li>
-                  <a
-                    href="mailto:suaelljay@gmail.com"
-                    className="hover:text-primary transition-colors"
-                  >
-                    Ell Jay Sua
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="mailto:suaelljay@gmail.com"
-                    className="hover:text-primary transition-colors text-xs"
-                  >
-                    suaelljay@gmail.com
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-outline-variant/20 flex justify-between items-center">
-          <p className="text-xs text-on-surface-variant">
-            © 2024 GoCheck Document Auditor. Not affiliated with DLSU CSO official administration.
-          </p>
-          <div className="flex gap-4">
-            <span className="material-symbols-outlined text-on-surface-variant text-sm">language</span>
-            <span className="material-symbols-outlined text-on-surface-variant text-sm">verified</span>
+          <div style={{ display: "flex", gap: 28 }}>
+            {["Guidelines", "Privacy"].map((x) => (
+              <span
+                key={x}
+                style={{
+                  fontSize: 13, color: "var(--ink-mute)",
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  cursor: "default",
+                }}
+              >
+                {x}
+              </span>
+            ))}
+            <a
+              href="mailto:suaelljay@gmail.com"
+              style={{
+                fontSize: 13, color: "var(--ink-mute)",
+                fontFamily: "Inter, system-ui, sans-serif",
+                textDecoration: "none",
+              }}
+            >
+              Contact
+            </a>
           </div>
         </div>
       </footer>

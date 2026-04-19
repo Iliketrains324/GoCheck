@@ -10,11 +10,27 @@
     --on-tertiary-container: #1ab74c;
     --surface: #f8f9fa;
     --on-surface: #191c1d;
+
+    /* Redesign tokens */
+    --ink: #0f2e1c;
+    --ink-mute: #6b7c73;
+    --paper: #fafaf8;
+    --container: #f0efeb;
+    --container-low: #f7f6f3;
+    --hairline: rgba(15, 46, 28, 0.08);
+    --hairline-strong: rgba(15, 46, 28, 0.18);
+    --accent: #1a7a40;
+    --accent-soft: #e6f4ec;
+    --accent-ink: #166634;
+    --amber-ink: #92400e;
+    --amber-soft: #fef3c7;
   }
 
   body {
     @apply bg-surface text-on-surface;
     font-family: Inter, system-ui, -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
   }
 
   * {
@@ -118,4 +134,13 @@
 
 .animate-pulse-bar {
   animation: pulse-bar 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
