@@ -1,18 +1,16 @@
 import React from "react";
-import { Check } from "./icons";
 
 export function Logo({ size = 20 }: { size?: number }) {
-  const box = Math.round(size * 1.4);
-  const radius = Math.round(size * 0.32);
+  const box = Math.round(size * 1.15);
   return (
     <div
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 8,
+        gap: 9,
         fontFamily: "Manrope, system-ui, sans-serif",
         fontWeight: 700,
-        letterSpacing: "-0.02em",
+        letterSpacing: "-0.025em",
         color: "var(--ink)",
         fontSize: size,
         textDecoration: "none",
@@ -22,17 +20,30 @@ export function Logo({ size = 20 }: { size?: number }) {
         style={{
           width: box,
           height: box,
-          borderRadius: radius,
-          background: "var(--ink)",
+          borderRadius: Math.round(box * 0.28),
+          background: "transparent",
+          color: "var(--accent)",
           display: "inline-flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
         }}
       >
-        <Check size={Math.round(size * 0.68)} stroke={2.5} style={{ color: "var(--paper)" }} />
+        <svg
+          width={Math.round(box * 0.95)}
+          height={Math.round(box * 0.95)}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="gc-draw"
+        >
+          <path d="M4 13.2 9.2 18.4 20 6.6" />
+        </svg>
       </span>
-      GoCheck
+      Go<span style={{ color: "var(--accent-ink)" }}>Check</span>
     </div>
   );
 }

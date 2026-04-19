@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Check, Alert, ArrowRight } from "@/app/components/icons";
 import { Logo } from "@/app/components/logo";
+import { useRevealObserver, useCountUp } from "@/app/components/animations";
 
 function HeroArtifact() {
   const rows = [
@@ -159,7 +162,22 @@ const CHECKS = [
   },
 ];
 
+function StatCount({ value, suffix = "" }: { value: string; suffix?: string }) {
+  const numeric = parseInt(value.replace(/\D/g, ""), 10);
+  const prefix = value.replace(/[\d~]+.*/, "");
+  const hasTilde = value.startsWith("~");
+  const count = useCountUp(numeric, 1200);
+  return (
+    <span>
+      {hasTilde ? "~" : prefix}
+      {count}
+      {suffix}
+    </span>
+  );
+}
+
 export default function HomePage() {
+  useRevealObserver();
   return (
     <div style={{ background: "var(--paper)", color: "var(--ink)", minHeight: "100vh" }}>
       {/* Nav */}
@@ -203,22 +221,21 @@ export default function HomePage() {
                   {label}
                 </Link>
               ))}
-              {(["Guidelines"] as const).map((label) => (
-                <span
-                  key={label}
-                  style={{
-                    fontFamily: "Inter, system-ui, sans-serif",
-                    fontWeight: 500,
-                    fontSize: 14,
-                    color: "var(--ink-mute)",
-                    cursor: "default",
-                    letterSpacing: "-0.005em",
-                    borderBottom: "1.5px solid transparent",
-                  }}
-                >
-                  {label}
-                </span>
-              ))}
+              <Link
+                href="/guidelines"
+                style={{
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  color: "var(--ink-mute)",
+                  textDecoration: "none",
+                  letterSpacing: "-0.005em",
+                  borderBottom: "1.5px solid transparent",
+                  padding: "6px 0",
+                }}
+              >
+                Guidelines
+              </Link>
             </nav>
           </div>
           <Link
@@ -255,7 +272,7 @@ export default function HomePage() {
               alignItems: "center",
             }}
           >
-            <div>
+            <div data-reveal>
               <span
                 style={{
                   display: "inline-flex",
@@ -321,23 +338,24 @@ export default function HomePage() {
                 >
                   Start an audit <ArrowRight size={15} stroke={2.2} />
                 </Link>
-                <span
+                <Link
+                  href="/guidelines"
                   style={{
                     fontFamily: "Inter, system-ui, sans-serif",
                     fontWeight: 600,
                     fontSize: 15,
                     color: "var(--ink)",
-                    cursor: "default",
                     padding: "16px 0",
                     letterSpacing: "-0.005em",
+                    textDecoration: "none",
                   }}
                 >
                   Read what gets checked
-                </span>
+                </Link>
               </div>
             </div>
 
-            <div>
+            <div data-reveal data-reveal-delay="3">
               <HeroArtifact />
             </div>
           </div>
@@ -431,7 +449,7 @@ export default function HomePage() {
         >
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 380px) minmax(0, 1fr)", gap: 80 }}>
-              <div>
+              <div data-reveal>
                 <span
                   style={{
                     fontFamily: "Inter, system-ui, sans-serif",
@@ -465,7 +483,7 @@ export default function HomePage() {
                 <div style={{ marginTop: 36, display: "flex", gap: 36 }}>
                   {[
                     { v: "13",  l: "Document types" },
-                    { v: "~40s", l: "Median audit time" },
+                    { v: "~40", l: "Median audit time", suffix: "s" },
                   ].map((stat) => (
                     <div key={stat.l}>
                       <div
@@ -475,7 +493,7 @@ export default function HomePage() {
                           letterSpacing: "-0.03em", color: "var(--ink)",
                         }}
                       >
-                        {stat.v}
+                        <StatCount value={stat.v} suffix={stat.suffix} />
                       </div>
                       <div
                         style={{
@@ -490,7 +508,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div>
+              <div data-reveal data-reveal-delay="2">
                 <div style={{ background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 12 }}>
                   {CHECKS.map((c, i) => (
                     <div
@@ -611,7 +629,8 @@ export default function HomePage() {
             </span>
           </div>
           <div style={{ display: "flex", gap: 28 }}>
-            {["Guidelines", "Privacy"].map((x) => (
+            <Link href="/guidelines" style={{ fontSize: 13, color: "var(--ink-mute)", fontFamily: "Inter, system-ui, sans-serif", textDecoration: "none" }}>Guidelines</Link>
+            {["Privacy"].map((x) => (
               <span
                 key={x}
                 style={{

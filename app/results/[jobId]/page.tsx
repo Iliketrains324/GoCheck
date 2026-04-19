@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useCountUp } from "@/app/components/animations";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { Job, DocResult, DocType, IssueItem } from "@/lib/supabase";
@@ -312,7 +313,7 @@ function ResultGroup({
       </button>
 
       {open && result.issues.length > 0 && (
-        <div style={{ borderTop: "1px solid var(--hairline)", background: "var(--container-low)" }}>
+        <div className="gc-stagger" style={{ borderTop: "1px solid var(--hairline)", background: "var(--container-low)" }}>
           {result.issues.map((it, i) => (
             <IssueRow key={i} issue={it} isLast={i === result.issues.length - 1} />
           ))}
@@ -355,6 +356,13 @@ function Stat({ label, value, warn }: { label: string; value: number; warn?: boo
       </div>
     </div>
   );
+}
+
+// ─── Score display with count-up ─────────────────────────────────────────────
+
+function ScoreDisplay({ score }: { score: number }) {
+  const displayed = useCountUp(score, 800);
+  return <>{displayed}</>;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -559,7 +567,7 @@ export default function ResultsPage() {
                   color: "var(--ink)", lineHeight: 1,
                 }}
               >
-                {score}
+                <ScoreDisplay score={score} />
               </span>
               <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 15, color: "var(--ink-mute)", fontWeight: 500 }}>
                 / 100
