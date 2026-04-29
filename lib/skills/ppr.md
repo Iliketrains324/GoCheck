@@ -113,24 +113,27 @@ NOT required for TL/YL or Asynchronous activities.
 ### Provisions for Profit and Loss (the two main signatories)
 - Must have exactly TWO signatories
 - They must hold DIFFERENT positions
-- **ONLY FLAG** if the LEFT signatory outranks the RIGHT signatory. The correct arrangement is lower rank on the left, higher rank on the right.
 
-**Rank order (lowest → highest):**
-JE (Junior Executive) → AVP (Assistant Vice President) → VP (Vice President) → EVP (Executive Vice President) → President → Faculty Adviser
+**To check signatory order, follow this exact procedure:**
+1. Identify the LEFT signatory's position and the RIGHT signatory's position
+2. Find each position's rank number in the table below
+3. Compare: if rank(LEFT) > rank(RIGHT) → FLAG. If rank(LEFT) ≤ rank(RIGHT) → DO NOT FLAG.
 
-**Examples — FLAG these (left outranks right, which is wrong):**
-- LEFT = VP, RIGHT = AVP
-- LEFT = EVP, RIGHT = VP
-- LEFT = President, RIGHT = EVP
+**Rank table:**
+| Rank | Position |
+|------|----------|
+| 1 | JE (Junior Executive) |
+| 2 | AVP (Assistant Vice President) |
+| 3 | VP (Vice President) |
+| 4 | EVP (Executive Vice President) |
+| 5 | President |
+| 6 | Faculty Adviser |
 
-**Examples — DO NOT FLAG these (right outranks left, which is correct):**
-- LEFT = AVP, RIGHT = VP ← this is the expected, normal configuration
-- LEFT = JE, RIGHT = AVP
-- LEFT = VP, RIGHT = EVP
-
-**Also DO NOT FLAG** if both signatories hold the same rank.
-
-> ⚠️ CRITICAL: If you see LEFT = AVP and RIGHT = VP, that is CORRECT. Do NOT flag it. AVP is a lower rank than VP, so AVP on the left and VP on the right follows the rule exactly. Flagging this arrangement is a mistake.
+**Worked examples:**
+- LEFT = AVP (rank 2), RIGHT = VP (rank 3) → 2 < 3 → **DO NOT FLAG** ✓ (this is the normal correct arrangement)
+- LEFT = VP (rank 3), RIGHT = AVP (rank 2) → 3 > 2 → **FLAG** ✗
+- LEFT = EVP (rank 4), RIGHT = VP (rank 3) → 4 > 3 → **FLAG** ✗
+- LEFT = JE (rank 1), RIGHT = AVP (rank 2) → 1 < 2 → **DO NOT FLAG** ✓
 
 **ACCEPTABLE position titles — do NOT flag any of these:**
 - President
