@@ -113,12 +113,22 @@ NOT required for TL/YL or Asynchronous activities.
 ### Provisions for Profit and Loss (the two main signatories)
 - Must have exactly TWO signatories
 - They must hold DIFFERENT positions
-- **ONLY FLAG** this section if the LEFT signatory has a HIGHER rank than the RIGHT signatory. The normal correct arrangement is lower rank on the left, higher rank on the right.
-  - Rank order low→high: JE/SE < other officer roles < AVP < VP < President
-  - **FLAG** (left outranks right): LEFT=VP + RIGHT=AVP, LEFT=President + RIGHT=VP
-  - **DO NOT FLAG** (right outranks left — this is correct): LEFT=AVP + RIGHT=VP, LEFT=SE + RIGHT=AVP
-  - **DO NOT FLAG** (equal rank is also acceptable)
-  - The arrangement LEFT=AVP + RIGHT=VP is the **expected, correct configuration** — do not flag it under any circumstances.
+- **ONLY FLAG** if the LEFT signatory outranks the RIGHT signatory. The correct arrangement is lower rank on the left, higher rank on the right.
+
+**Rank order (lowest → highest):**
+JE (Junior Executive) → AVP (Assistant Vice President) → VP (Vice President) → EVP (Executive Vice President) → President → Faculty Adviser
+
+**Examples — FLAG these (left outranks right, which is wrong):**
+- LEFT = VP, RIGHT = AVP
+- LEFT = EVP, RIGHT = VP
+- LEFT = President, RIGHT = EVP
+
+**Examples — DO NOT FLAG these (right outranks left, which is correct):**
+- LEFT = AVP, RIGHT = VP ← this is the expected, normal configuration
+- LEFT = JE, RIGHT = AVP
+- LEFT = VP, RIGHT = EVP
+
+**Also DO NOT FLAG** if both signatories hold the same rank.
 
 **ACCEPTABLE position titles — do NOT flag any of these:**
 - President
