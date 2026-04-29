@@ -130,6 +130,8 @@ JE (Junior Executive) → AVP (Assistant Vice President) → VP (Vice President)
 
 **Also DO NOT FLAG** if both signatories hold the same rank.
 
+> ⚠️ CRITICAL: If you see LEFT = AVP and RIGHT = VP, that is CORRECT. Do NOT flag it. AVP is a lower rank than VP, so AVP on the left and VP on the right follows the rule exactly. Flagging this arrangement is a mistake.
+
 **ACCEPTABLE position titles — do NOT flag any of these:**
 - President
 - Vice President for [any department] (e.g. "VP for Finance", "VP for Human Resources and Development")
