@@ -108,6 +108,8 @@ NOT required for TL/YL or Asynchronous activities.
 - Total Projected Expenses must match Section V total (compare numerically)
 - All monetary values: Php or PHP prefix with .00 ending
 - The VP Finance signatory slot may ONLY be signed by: the VP Finance, an officially recognized OIC, or the President — flag any other person signing for VP Finance
+  - To check this: look at the POSITION written next to the signature in the VP Finance slot. If it says "VP Finance", "VP for Finance", "OIC", or "President", it passes — do NOT flag it
+  - Do NOT cross-reference the name against other sections or other signatories. You cannot verify names from the document alone.
 
 ## SECTION IX — Provisions for Profit and Loss / Signatories
 
