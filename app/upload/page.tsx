@@ -83,7 +83,7 @@ function FileRow({
           {file.rendering && (
             <span style={{ color: "var(--accent-ink)", marginLeft: 8 }}>· Rendering pages…</span>
           )}
-          {!file.rendering && (file.docType === "AFORM" || file.docType === "PPR") && file.pages.length > 0 && (
+          {!file.rendering && (file.docType === "AFORM" || file.docType === "PPR" || file.docType === "SAMPLE_PUB" || file.docType === "PRE_REGISTRATION_FORM") && file.pages.length > 0 && (
             <span style={{ color: "var(--accent-ink)", marginLeft: 8 }}>· {file.pages.length} pages rendered</span>
           )}
         </div>
@@ -168,7 +168,7 @@ export default function UploadPage() {
       prev.map((f) => (f.id === id ? { ...f, docType } : f))
     );
 
-    if (docType === "AFORM" || docType === "PPR") {
+    if (docType === "AFORM" || docType === "PPR" || docType === "SAMPLE_PUB" || docType === "PRE_REGISTRATION_FORM") {
       const file = uploadedFiles.find((f) => f.id === id)?.file;
       if (file) {
         setUploadedFiles((prev) =>
@@ -205,7 +205,7 @@ export default function UploadPage() {
       const { extractTextFromFile } = await import("@/lib/pdf");
       const filesPayload = await Promise.all(
         uploadedFiles.map(async (uf) => {
-          if (uf.docType === "AFORM" || uf.docType === "PPR") {
+          if (uf.docType === "AFORM" || uf.docType === "PPR" || uf.docType === "SAMPLE_PUB" || uf.docType === "PRE_REGISTRATION_FORM") {
             return { docType: uf.docType, fileName: uf.file.name, pages: uf.pages };
           }
           const text = await extractTextFromFile(uf.file);

@@ -1,4 +1,4 @@
-import { callModel, TEXT_MODEL } from "@/lib/openrouter";
+import { callModel, callVisionModel, TEXT_MODEL } from "@/lib/openrouter";
 import type { AgentInput, AgentOutput, DocType } from "./types";
 import { loadSkill } from "@/lib/skills/load";
 import { parseAgentOutput } from "./parse";
@@ -66,9 +66,27 @@ export async function checkAcademicContestMechanics(input: AgentInput): Promise<
 }
 
 export async function checkSamplePub(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("SAMPLE_PUB", "sample-pub", input.text ?? "", input.onToken);
+  if (!input.pages || input.pages.length === 0) {
+    return { docType: "SAMPLE_PUB", status: "error", issues: [], summary: "No page images provided for Sample Pub vision check." };
+  }
+  const systemPrompt = loadSkill("sample-pub");
+  try {
+    const raw = await callVisionModel(systemPrompt, "Review this Sample Publication and return the JSON result.", input.pages, input.onToken);
+    return parseAgentOutput(raw, "SAMPLE_PUB");
+  } catch (err) {
+    return { docType: "SAMPLE_PUB", status: "error", issues: [], summary: `Error during Sample Pub check: ${(err as Error).message}` };
+  }
 }
 
 export async function checkPreRegistrationForm(input: AgentInput): Promise<AgentOutput> {
-  return runTextCheck("PRE_REGISTRATION_FORM", "pre-registration-form", input.text ?? "", input.onToken);
+  if (!input.pages || input.pages.length === 0) {
+    return { docType: "PRE_REGISTRATION_FORM", status: "error", issues: [], summary: "No page images provided for Pre-Registration Form vision check." };
+  }
+  const systemPrompt = loadSkill("pre-registration-form");
+  try {
+    const raw = await callVisionModel(systemPrompt, "Review this Pre-Registration Form and return the JSON result.", input.pages, input.onToken);
+    return parseAgentOutput(raw, "PRE_REGISTRATION_FORM");
+  } catch (err) {
+    return { docType: "PRE_REGISTRATION_FORM", status: "error", issues: [], summary: `Error during Pre-Registration Form check: ${(err as Error).message}` };
+  }
 }
