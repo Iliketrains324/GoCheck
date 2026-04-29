@@ -25,6 +25,7 @@ Look at every section carefully. Use what you can visually see in the document p
 - Pre-registration links REQUIRED ONLY for these EXACT activity types: Seminar/Workshop, Donation Drive, Webinars, Case Competitions
   - Do NOT extend this rule to other activity types (e.g. General Assembly, Team Building, Socials, Orientation) — even if they seem similar
   - If the activity IS one of the listed types: look carefully for a link in the Venue field or elsewhere before flagging it as missing
+- A pre-registration link appearing alongside a physical venue is acceptable for ANY activity type, including in-person and spiritual activities — do NOT flag this
 - If a Google Form link is present, screenshots must be in the pre-acts
 - Do NOT flag A-Form cross-document consistency — that is handled by a separate coherence agent
 

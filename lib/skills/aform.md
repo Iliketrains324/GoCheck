@@ -69,7 +69,6 @@ For **Signatories** (Faculty Adviser / USG Treasurer / EB in Charge): note which
 - Venue/link must be clearly readable
 - If link is too long: "See PPR" or "See Link in PPR" is acceptable
 - F2F venues optional for TL/YL activities
-- A pre-registration link appearing alongside a physical venue is acceptable for ANY activity type, including in-person and spiritual activities — do NOT flag this
 
 ## FIELD 8 — ENP/ENMP
 - ENP (Expected Number of Participants) must be ≥ ENMP (Expected Number of Members Participating)
