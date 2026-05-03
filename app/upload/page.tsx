@@ -176,7 +176,7 @@ export default function UploadPage() {
         );
         const { renderPdfToImages } = await import("@/lib/pdf");
         const pages = await renderPdfToImages(file, {
-          scale: 2.0,
+          scale: docType === "AFORM" ? 2.0 : 1.5,
           maxPages: 10,
           sections: docType === "AFORM" ? 3 : 0,
         });
@@ -218,9 +218,13 @@ export default function UploadPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ files: filesPayload }),
       });
-      const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error ?? "Failed to create job");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Upload failed (${res.status}). Try uploading fewer pages or documents.`);
+      }
+
+      const data = await res.json();
 
       router.push(`/check/${data.jobId}`);
     } catch (err) {
